@@ -1,0 +1,14 @@
+body {
+  background: #01081c;
+}
+
+#app {
+  margin: 0 auto;
+  width: 65%;
+}
+
+@media only screen and (max-width: 768px) {
+  #app {
+    width: 85%;
+  }
+}

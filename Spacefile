@@ -1,0 +1,20 @@
+# Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
+v: 0
+micros:
+  - name: frontend
+    src: frontend
+    engine: vue
+    primary: true
+    path: app
+    public: true
+    serve: dist/
+  - name: backend
+    src: backend
+    engine: python3.9
+    public: true
+    path: api
+    dev: gunicorn main:app
+    presets:
+      env:
+        - name: NEODB_API_KEY
+          description: Get it from https://neodb.social/developer/
