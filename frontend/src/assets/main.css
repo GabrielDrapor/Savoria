@@ -4,11 +4,14 @@ body {
 
 #app {
   margin: 0 auto;
-  width: 65%;
+  width: 50%;
 }
 
 @media only screen and (max-width: 768px) {
   #app {
-    width: 85%;
+    width: 90%;
+  }
+  .cover {
+    width: 27%;
   }
 }

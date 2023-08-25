@@ -31,7 +31,7 @@ export default {
 .cover {
   display: inline;
   padding: 10px;
-  width: 20%;
+  width: 23%;
   height: 25%;
   overflow: hidden;
 }
