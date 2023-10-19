@@ -1,6 +1,6 @@
 # Savoria
 All I Savored.
 
-What I savored this year: [https://savor.jellysu.buzz/](https://savor.je11y.buzz/)
+What I savored this year: https://savor.je11y.buzz/
 
 Deta App: https://deta.space/discovery/r/hhuhef3qwrdn68a8
