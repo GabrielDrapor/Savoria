@@ -4,12 +4,11 @@ import SavorSection from "./components/SavorSection.vue";
 export default {
   data() {
     return {
-      savors: [],
-      category_map: {
-        book: { id: 1, title: "I read" },
-        screen: { id: 2, title: "I watched" },
-        music: { id: 3, title: "I listened" },
-        game: { id: 4, title: "I played" },
+      savors: {
+        1: {type: "book", title: "I read", completedItems: []},
+        2: {type: "screen", title: "I watched", completedItems: []},
+        3: {type: "music", title: "I listened", completedItems: []},
+        4: {type: "game", title: "I played", completedItems: []},
       },
     };
   },
@@ -17,23 +16,19 @@ export default {
     SavorSection,
   },
   methods: {
-    async getCompletedItems(category_name) {
-      const req = await fetch(`/api/complete/${category_name}`);
+    async getCompletedItems(category_id) {
+      const type = this.savors[category_id].type
+      const req = await fetch(`/api/complete/${type}`);
       const resp_json = await req.json();
 
-      this.savors.push({
-        id: this.category_map[category_name].id,
-        title: this.category_map[category_name].title,
-        completedItems: resp_json.data,
-      });
+      this.savors[category_id].completedItems = resp_json.data;
     },
   },
   mounted() {
-    for (let category_name in this.category_map) {
-      this.getCompletedItems(category_name);
+    for (let category_id in this.savors) {
+      this.getCompletedItems(category_id);
     }
 
-    console.log(this.savors);
   },
 };
 </script>
@@ -42,9 +37,7 @@ export default {
   <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
 
   <SavorSection
-    v-for="savor in savors.sort((i, j) => {
-      return i.id - j.id;
-    })"
+    v-for="savor in Object.values(savors)"
     :savor="savor"
     :key="savor.id"
   />
@@ -52,7 +45,12 @@ export default {
 
 <style>
 .pageTitle {
-  color: white;
+  color: #f3f3f3;
   font-size: 5em;
+  font-family: 'Helvetica', 'SimHei', 'STHeiti';
+}
+
+.section {
+  margin-bottom: 50px;
 }
 </style>
