@@ -1,14 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap');
+
 body {
-  background: #181831;
+  background: linear-gradient(135deg, #1a1b4b 0%, #181831 50%, #161627 100%);
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #f3f3f3;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(62, 63, 137, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(62, 63, 137, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 #app {
   margin: 0 auto;
-  width: 60%;
+  width: 75%;
+  max-width: 1400px;
+  position: relative;
+  z-index: 2;
 }
 
 @media only screen and (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
   #app {
-    width: 90%;
+    width: 100%;
   }
 }
