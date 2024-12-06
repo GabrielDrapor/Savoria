@@ -22,7 +22,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route("/")
+@app.route("/api/")
 def index():
     return "Alive!"
 
@@ -43,8 +43,8 @@ def get_end_date_of_year(year):
     return dt_fmt.format(year=year)
 
 
-@app.route("/complete/<category>")
-@app.route("/complete/<category>/<year>")
+@app.route("/api/complete/<category>")
+@app.route("/api/complete/<category>/<year>")
 def get_completed_items_this_year(category, year=0):
     if category not in ("book", "music", "game", "movie", "tv"):
         return "invalid category", 400
@@ -95,8 +95,8 @@ def get_completed_items_this_year(category, year=0):
             }
 
 
-@app.route("/complete/screen")
-@app.route("/complete/screen/<year>")
+@app.route("/api/complete/screen")
+@app.route("/api/complete/screen/<year>")
 def get_completed_screen_items_this_year(year=0):
     movies = get_completed_items_this_year("movie", year)["data"]
     tvs = get_completed_items_this_year("tv", year)["data"]
