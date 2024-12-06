@@ -18,7 +18,10 @@ export default {
   methods: {
     async getCompletedItems(category_id) {
       const type = this.savors[category_id].type
-      const req = await fetch(`/api/complete/${type}/2023`);
+      const baseUrl = process.env.NODE_ENV === 'development' 
+        ? "http://localhost:9527"
+        : "";
+      const req = await fetch(baseUrl + `/api/complete/${type}/2023`);
       const resp_json = await req.json();
 
       this.savors[category_id].completedItems = resp_json.data;
