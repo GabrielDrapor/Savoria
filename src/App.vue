@@ -18,7 +18,7 @@ export default {
   methods: {
     async getCompletedItems(category_id) {
       const type = this.savors[category_id].type
-      const req = await fetch(`/api/complete/${type}`);
+      const req = await fetch(`/api/complete/${type}/2023`);
       const resp_json = await req.json();
 
       this.savors[category_id].completedItems = resp_json.data;
@@ -34,7 +34,7 @@ export default {
 </script>
 
 <template>
-  <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
+  <h1 class="pageTitle">In 2023,</h1>
 
   <SavorSection
     v-for="savor in Object.values(savors)"
