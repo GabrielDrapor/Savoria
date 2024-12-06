@@ -17,6 +17,8 @@ if not NEODB_API_KEY:
 
 AUTHORIZATION = f"Bearer {os.environ.get('NEODB_API_KEY', '')}"
 
+IMAGE_THUMBNAIL_SUFFIX = ".200x200_q85_autocrop_crop-scale.jpg"
+
 
 app = Flask(__name__)
 CORS(app)
@@ -54,9 +56,6 @@ def get_completed_items_this_year(category, year=0):
     end_date_of_this_year = get_end_date_of_year(year)
 
     resp = get_shelf_items_from_neodb(category, current_page, "complete")
-    if "data" not in resp:
-        print("err:", resp)
-        raise
     completed_items = resp["data"]
     if (
         not completed_items
@@ -110,7 +109,16 @@ def get_shelf_items_from_neodb(category, page, shelf_type):
         params={"category": category, "page": page},
         headers={"Authorization": AUTHORIZATION},
     )
-    return req.json()
+    result = req.json()
+
+    if "data" not in result:
+        raise Exception(result)
+
+    for item in result["data"]:
+        item["item"]["cover_image_url"] = item["item"]["cover_image_url"] + \
+            IMAGE_THUMBNAIL_SUFFIX
+
+    return result
 
 
 if __name__ == "__main__":
