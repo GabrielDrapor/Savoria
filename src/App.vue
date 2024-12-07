@@ -19,7 +19,8 @@ export default {
         screen: 1,
         music: 1,
         game: 1
-      }
+      },
+      isReducedMotion: false
     };
   },
   methods: {
@@ -49,19 +50,25 @@ export default {
       const screenItems = await this.getScreenItems();
       this.categoryItems.screen = screenItems;
 
-      // Set up scroll handlers after items are loaded
       this.$nextTick(() => {
+        this.checkReducedMotion();
         const tracks = document.querySelectorAll('.itemsTrack');
         tracks.forEach(track => {
-          track.addEventListener('scroll', this.handleScrollPosition);
+          track.addEventListener('scroll', this.handleScrollPosition, { passive: true });
         });
       });
     },
     handleScroll(category, event) {
-      const speed = Math.abs(event.deltaX) / 50;
-      this.scrollSpeeds[category] = Math.min(Math.max(1, speed), 5);
+      if (this.isReducedMotion) return;
       
-      setTimeout(() => {
+      const speed = Math.abs(event.deltaX) / 50;
+      this.scrollSpeeds[category] = Math.min(Math.max(1, speed), 3);
+      
+      if (this.scrollTimeout) {
+        clearTimeout(this.scrollTimeout);
+      }
+      
+      this.scrollTimeout = setTimeout(() => {
         this.scrollSpeeds[category] = 1;
       }, 1000);
     },
@@ -74,13 +81,17 @@ export default {
       } else if (track.scrollLeft <= 0) {
         track.scrollLeft = scrollWidth;
       }
+    },
+    checkReducedMotion() {
+      this.isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      
+      this.isReducedMotion = this.isReducedMotion || window.innerWidth < 768;
     }
   },
   mounted() {
     this.getAllItems();
   },
   beforeUnmount() {
-    // Clean up scroll handlers
     const tracks = document.querySelectorAll('.itemsTrack');
     tracks.forEach(track => {
       track.removeEventListener('scroll', this.handleScrollPosition);
@@ -112,13 +123,18 @@ export default {
         </div>
         <!-- Show actual items when loaded -->
         <div v-else class="itemsInner">
-          <template v-for="n in 6" :key="n">
+          <template v-for="n in (isReducedMotion ? 2 : 6)" :key="n">
             <div 
               v-for="(item, index) in items" 
               :key="category + n + index" 
               class="floatingItem"
             >
-              <img class="coverImg" :src="item.item.cover_image_url" :alt="item.item.display_title" />
+              <img 
+                class="coverImg" 
+                :src="item.item.cover_image_url" 
+                :alt="item.item.display_title"
+                loading="lazy"
+              />
             </div>
           </template>
         </div>
@@ -366,6 +382,21 @@ export default {
 
   .loadingItem {
     width: 100px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 768px) {
+  .itemsInner {
+    animation: none;
+  }
+  
+  .floatingItem:hover {
+    transform: none;
+  }
+  
+  .coverImg {
+    transform: none;
+    transition: none;
   }
 }
 </style>
