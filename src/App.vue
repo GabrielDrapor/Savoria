@@ -250,9 +250,9 @@ export default {
 }
 
 .floatingItem {
-  width: 120px;
+  width: 150px;
   flex-shrink: 0;
-  aspect-ratio: 2/3;
+  aspect-ratio: 3/4;
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   transform-origin: center center;
   padding: 1rem 0;
@@ -267,11 +267,12 @@ export default {
 .coverImg {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   will-change: transform;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .floatingItem:hover .coverImg {
@@ -326,7 +327,7 @@ export default {
 
 .loadingItem {
   width: 120px;
-  aspect-ratio: 2/3;
+  aspect-ratio: 3/4;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   position: relative;
@@ -373,7 +374,7 @@ export default {
   }
   
   .floatingItem {
-    width: 90px;
+    width: 120px;
   }
 
   .itemsInner {
@@ -381,7 +382,8 @@ export default {
   }
 
   .loadingItem {
-    width: 100px;
+    width: 120px;
+    aspect-ratio: 3/4;
   }
 }
 
