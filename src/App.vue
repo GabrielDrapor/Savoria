@@ -28,7 +28,7 @@ export default {
       const baseUrl = process.env.NODE_ENV === 'development' 
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/${type}`);
+      const req = await fetch(baseUrl + `/api/complete/${type}/2024`);
       const resp_json = await req.json();
       return resp_json.data;
     },
@@ -36,7 +36,7 @@ export default {
       const baseUrl = process.env.NODE_ENV === 'development' 
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/screen`);
+      const req = await fetch(baseUrl + `/api/complete/screen/2024`);
       const resp_json = await req.json();
       return resp_json.data;
     },
@@ -101,7 +101,7 @@ export default {
 </script>
 
 <template>
-  <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
+  <h1 class="pageTitle">In 2024,</h1>
 
   <div class="rowsContainer">
     <div 
