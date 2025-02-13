@@ -24,6 +24,9 @@ export default {
     };
   },
   methods: {
+    getPrevYearUrl() {
+      return window.location.href.replace('savor', `savor${new Date().getFullYear() - 1}`);
+    },
     async getCompletedItems(type) {
       const baseUrl = process.env.NODE_ENV === 'development' 
         ? "http://localhost:9527"
@@ -101,6 +104,7 @@ export default {
 </script>
 
 <template>
+  <a :href=getPrevYearUrl() class="backButton" target="_blank" rel="noopener noreferrer">← {{ new Date().getFullYear() - 1 }}</a>
   <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
 
   <div class="rowsContainer">
@@ -144,6 +148,26 @@ export default {
 </template>
 
 <style>
+.backButton {
+  position: relative;
+  display: inline-block;
+  margin: 20px 0 0 20px;
+  z-index: 10;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: #f3f3f3;
+  text-decoration: none;
+  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  font-size: 1em;
+  transition: background 0.2s ease;
+  z-index: 10;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .pageTitle {
   color: #f3f3f3;
   font-size: 5.5em;
