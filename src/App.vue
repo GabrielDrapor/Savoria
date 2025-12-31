@@ -25,13 +25,13 @@ export default {
   },
   methods: {
     getPrevYearUrl() {
-      return window.location.href.replace('savor', `savor${new Date().getFullYear() - 1}`);
+      return window.location.href.replace('savor', `savor2024`);
     },
     async getCompletedItems(type) {
       const baseUrl = process.env.NODE_ENV === 'development' 
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/${type}`);
+      const req = await fetch(baseUrl + `/api/complete/${type}/2025`);
       const resp_json = await req.json();
       return resp_json.data;
     },
@@ -39,7 +39,7 @@ export default {
       const baseUrl = process.env.NODE_ENV === 'development' 
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/screen`);
+      const req = await fetch(baseUrl + `/api/complete/screen/2025`);
       const resp_json = await req.json();
       return resp_json.data;
     },
@@ -104,8 +104,8 @@ export default {
 </script>
 
 <template>
-  <a :href=getPrevYearUrl() class="backButton" target="_blank" rel="noopener noreferrer">← {{ new Date().getFullYear() - 1 }}</a>
-  <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
+  <a :href=getPrevYearUrl() class="backButton" target="_blank" rel="noopener noreferrer">← 2024</a>
+  <h1 class="pageTitle">In 2025,</h1>
 
   <div class="rowsContainer">
     <div 
