@@ -28,8 +28,8 @@ Implement native year navigation within the application, with each year having i
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| REQ-1 | Each year has its own dedicated page with year navigation links to switch between years | Must |
-| REQ-2 | Year navigation links display available years based on user's NEODB history | Must |
+| REQ-1 | Each year has its own dedicated page with "Previous year" and "Next year" navigation buttons to switch between years | Must |
+| REQ-2 | "Previous year" and "Next year" buttons navigate within the range of years available in user's NEODB history | Must |
 | REQ-3 | Replace the auto-scrolling carousel with a CSS Grid layout for displaying covers organized by category (carousel to be completely removed) | Must |
 | REQ-4 | Each category section displays all items in a responsive grid format | Must |
 | REQ-5 | Cover images maintain aspect ratio and display consistently across the grid | Must |
@@ -45,7 +45,7 @@ Implement native year navigation within the application, with each year having i
 |----|-------------|----------|
 | NFR-1 | Page load performance: Initial load under 3 seconds on standard connection | Must |
 | NFR-2 | Responsive design: Grid layout adapts to mobile, tablet, and desktop viewports | Must |
-| NFR-3 | Accessibility: Keyboard navigation support for year selector and grid items | Should |
+| NFR-3 | Accessibility: Keyboard navigation support for year navigation buttons and grid items | Should |
 | NFR-4 | Accessibility: Proper ARIA labels and semantic HTML structure | Should |
 | NFR-5 | Browser compatibility: Support for Chrome, Firefox, Safari, Edge (latest 2 versions) | Must |
 | NFR-6 | Reduced motion support: Respect `prefers-reduced-motion` system setting | Should |
@@ -84,11 +84,15 @@ Implement native year navigation within the application, with each year having i
 **Acceptance Criteria:**
 - **Given** I am on any year's gallery page
 - **When** I look at the year navigation
-- **Then** I see links to available years from my earliest NEODB record to the current year
-- **Given** I click on a different year link (e.g., 2023)
+- **Then** I see "Previous year" and "Next year" buttons
+- **And** the buttons are disabled at the boundaries (earliest/latest year with data)
+- **Given** I click "Previous year" button
 - **When** the navigation completes
-- **Then** I am on the 2023 year page displaying my media consumption for that year
+- **Then** I am on the previous year's page displaying my media consumption for that year
 - **And** the URL reflects the year path (e.g., `/2023`)
+- **Given** I click "Next year" button
+- **When** the navigation completes
+- **Then** I am on the next year's page displaying my media consumption for that year
 
 **Priority:** Must
 **Related Requirements:** REQ-1, REQ-2, REQ-6
@@ -177,7 +181,7 @@ Implement native year navigation within the application, with each year having i
 - **When** I view the gallery
 - **Then** the grid adapts to show fewer columns (e.g., 2-3 columns)
 - **And** covers remain properly sized and tappable
-- **And** the year selector is accessible and usable
+- **And** the year navigation buttons are accessible and usable
 
 **Priority:** Must
 **Related Requirements:** REQ-4, NFR-2
@@ -190,14 +194,14 @@ Implement native year navigation within the application, with each year having i
 **So that** I can use the application without a mouse
 
 **Acceptance Criteria:**
-- **Given** I focus on a year navigation link using Tab key
+- **Given** I focus on a year navigation button using Tab key
 - **When** I press Enter or Space
-- **Then** I navigate to that year's page
+- **Then** I navigate to the previous or next year's page accordingly
 - **Given** I am on any year page
-- **When** I use Tab to move through year navigation links
-- **Then** I can access all available year links
-- **When** I press Enter on a year link
-- **Then** I navigate to that year's page
+- **When** I use Tab to move through year navigation buttons
+- **Then** I can access both "Previous year" and "Next year" buttons
+- **When** I press Enter on a navigation button
+- **Then** I navigate to the corresponding year's page
 
 **Priority:** Should
 **Related Requirements:** NFR-3, NFR-4
@@ -220,7 +224,7 @@ Implement native year navigation within the application, with each year having i
    └── Hover/tap reveals item titles
 
 3. User wants to view different year
-   └── Clicks year navigation link in header
+   └── Clicks "Previous year" or "Next year" button in header
    └── Navigates to that year's dedicated page
 
 4. Page transitions to new year
@@ -237,9 +241,10 @@ Implement native year navigation within the application, with each year having i
 
 #### Year Navigation Component
 - Position: Header area, prominently placed near title
-- Style: Navigation links or buttons matching existing design language (e.g., "← 2023 | 2024 →" or year list)
-- Content: Links to available years from earliest record to current year
-- Visual indicator: Clearly highlights the current year's page
+- Style: Two navigation buttons matching existing design language: "← Previous year" and "Next year →"
+- Content: Buttons navigate sequentially through available years with data
+- Visual indicator: Current year displayed between buttons; buttons disabled at year boundaries
+- Behavior: "Previous year" disabled on earliest year; "Next year" disabled on latest year
 
 #### Category Grid Sections
 - Layout: Full-width sections, one per category
@@ -259,7 +264,7 @@ Implement native year navigation within the application, with each year having i
 
 ### Accessibility Considerations
 - Focus indicators visible on all interactive elements
-- Year navigation links operable via keyboard
+- Year navigation buttons operable via keyboard
 - Alt text on all cover images (using item's `display_title`)
 - Color contrast meets WCAG 2.1 AA standards
 - Skip links for keyboard navigation between sections
@@ -273,7 +278,7 @@ The implementation leverages the existing Vue 3 frontend and Flask backend archi
 
 1. **Page-Per-Year Architecture**: Each year has its own dedicated page/route (e.g., `/2023`, `/2024`)
 2. **Vue Router Path-Based Routing**: Use Vue Router with path parameters to handle year pages
-3. **Year Navigation Component**: Navigation links in header to switch between year pages
+3. **Year Navigation Component**: "Previous year" and "Next year" buttons in header to switch between year pages
 4. **Grid Layout Transformation**: Replace the auto-scrolling carousel with a CSS Grid layout
 5. **Data Range Discovery**: Optionally add an API endpoint to discover available years with data
 
@@ -297,7 +302,7 @@ The implementation leverages the existing Vue 3 frontend and Flask backend archi
 ## Design Specification
 
 ### Recommended Approach
-Transform the existing auto-scrolling carousel into a responsive CSS Grid layout with a page-per-year architecture. Each year has its own dedicated route (e.g., `/2023`). Add year navigation links to the header for switching between year pages. Leverage Vue Router for path-based routing.
+Transform the existing auto-scrolling carousel into a responsive CSS Grid layout with a page-per-year architecture. Each year has its own dedicated route (e.g., `/2023`). Add "Previous year" and "Next year" navigation buttons to the header for switching between year pages. Leverage Vue Router for path-based routing.
 
 ### Key Technical Decisions
 
@@ -309,7 +314,7 @@ Transform the existing auto-scrolling carousel into a responsive CSS Grid layout
 #### 2. Year Range Discovery
 - **Options Considered**: Hardcode year range, new API endpoint to discover years with data, fetch current year and allow ±N years
 - **Tradeoffs**: Hardcoding is inflexible; new endpoint adds API surface; ±N years may show empty years
-- **Recommendation**: Auto-detect available years from user's NEODB history via a discovery endpoint or by analyzing existing data responses. Only years with actual data should appear in the year selector, providing a cleaner UX and eliminating empty year selections
+- **Recommendation**: Auto-detect available years from user's NEODB history via a discovery endpoint or by analyzing existing data responses. Navigation buttons should only allow navigation within years that have actual data, disabling at boundaries
 
 #### 3. Grid Layout Implementation (Complete Carousel Replacement)
 - **Decision**: Completely remove the existing auto-scrolling carousel and replace with CSS Grid layout
@@ -329,7 +334,7 @@ Transform the existing auto-scrolling carousel into a responsive CSS Grid layout
 flowchart TB
     subgraph Frontend["Frontend (Vue 3)"]
         VR[Vue Router /:year]
-        YN[Year Navigation Component]
+        YN[Year Navigation Buttons]
         YP[Year Page Component]
         GG[Grid Gallery Component]
         CI[Cover Item Component]
@@ -344,7 +349,7 @@ flowchart TB
     end
 
     VR -->|route params| YP
-    YN -->|navigation links| VR
+    YN -->|prev/next navigation| VR
     YP -->|year context| GG
     GG -->|fetches data| API
     API -->|proxies request| NEODB
@@ -364,7 +369,7 @@ flowchart TB
 
 ### Success Criteria
 - Each year has its own dedicated page accessible via URL path
-- Year navigation allows switching between year pages
+- "Previous year" and "Next year" buttons allow switching between year pages
 - Grid displays all items; vertical scrolling acceptable for large collections
 - URL accurately reflects selected year (e.g., `/2023`)
 - Existing visual design aesthetic is preserved
