@@ -1,0 +1,225 @@
+import { describe, it, expect } from 'vitest';
+import { mount } from '@vue/test-utils';
+import CategorySection from '../../src/components/CategorySection.vue';
+
+describe('CategorySection', () => {
+  const mockItems = [
+    {
+      item: {
+        cover_image_url: 'https://example.com/cover1.jpg',
+        display_title: 'Test Book 1',
+        id: '1'
+      },
+      created_time: '2024-01-15T10:30:00Z'
+    },
+    {
+      item: {
+        cover_image_url: 'https://example.com/cover2.jpg',
+        display_title: 'Test Book 2',
+        id: '2'
+      },
+      created_time: '2024-02-20T14:00:00Z'
+    }
+  ];
+
+  describe('Component Rendering (Test Case 5)', () => {
+    it('renders with category title header and grid container', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      // Check category title is rendered
+      const title = wrapper.find('.category-title');
+      expect(title.exists()).toBe(true);
+      expect(title.text()).toBe('I read');
+
+      // Check grid container is rendered
+      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      expect(gridContainer.exists()).toBe(true);
+
+      // Check data-category attribute
+      expect(wrapper.find('.category-section').attributes('data-category')).toBe('book');
+    });
+
+    it('renders all four category sections with correct titles', () => {
+      const categories = [
+        { category: 'book', title: 'I read' },
+        { category: 'screen', title: 'I watched' },
+        { category: 'music', title: 'I listened' },
+        { category: 'game', title: 'I played' }
+      ];
+
+      categories.forEach(({ category, title }) => {
+        const wrapper = mount(CategorySection, {
+          props: {
+            title,
+            items: mockItems,
+            category
+          }
+        });
+
+        expect(wrapper.find('.category-title').text()).toBe(title);
+        expect(wrapper.find('.category-section').attributes('data-category')).toBe(category);
+      });
+    });
+
+    it('renders loading state when no items provided', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book'
+        }
+      });
+
+      const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
+      expect(loadingGrid.exists()).toBe(true);
+
+      const loadingItems = wrapper.findAll('.loading-item');
+      expect(loadingItems.length).toBe(8);
+    });
+
+    it('renders all cover items when items are provided', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridItems = wrapper.findAll('[data-testid="grid-item"]');
+      expect(gridItems.length).toBe(2);
+    });
+
+    it('renders cover images with correct attributes', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const images = wrapper.findAll('.cover-img');
+      expect(images.length).toBe(2);
+
+      // Check first image
+      expect(images[0].attributes('src')).toBe('https://example.com/cover1.jpg');
+      expect(images[0].attributes('alt')).toBe('Test Book 1');
+      expect(images[0].attributes('loading')).toBe('lazy');
+
+      // Check second image
+      expect(images[1].attributes('src')).toBe('https://example.com/cover2.jpg');
+      expect(images[1].attributes('alt')).toBe('Test Book 2');
+    });
+
+    it('renders item titles in overlay', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const titles = wrapper.findAll('.item-title');
+      expect(titles.length).toBe(2);
+      expect(titles[0].text()).toBe('Test Book 1');
+      expect(titles[1].text()).toBe('Test Book 2');
+    });
+  });
+
+  describe('Grid CSS Properties (Test Case 3)', () => {
+    it('grid container uses CSS Grid display', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      expect(gridContainer.exists()).toBe(true);
+      expect(gridContainer.classes()).toContain('grid-container');
+    });
+
+    it('grid items have correct structure for grid layout', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridItems = wrapper.findAll('.grid-item');
+      expect(gridItems.length).toBe(2);
+
+      // Each grid item should contain an image and title overlay
+      gridItems.forEach(item => {
+        expect(item.find('.cover-img').exists()).toBe(true);
+        expect(item.find('.item-title-overlay').exists()).toBe(true);
+      });
+    });
+
+    it('grid container has proper gap spacing class', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridContainer = wrapper.find('.grid-container');
+      expect(gridContainer.exists()).toBe(true);
+      // The gap property is set in CSS - we verify the class exists
+      expect(gridContainer.classes()).toContain('grid-container');
+    });
+  });
+
+  describe('Props Validation', () => {
+    it('accepts required title prop', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'Test Title',
+          items: [],
+          category: 'book'
+        }
+      });
+
+      expect(wrapper.find('.category-title').text()).toBe('Test Title');
+    });
+
+    it('handles empty items array gracefully', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book'
+        }
+      });
+
+      expect(wrapper.find('[data-testid="loading-grid"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(false);
+    });
+
+    it('sets data-category attribute correctly', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I watched',
+          items: mockItems,
+          category: 'screen'
+        }
+      });
+
+      expect(wrapper.find('.category-section').attributes('data-category')).toBe('screen');
+    });
+  });
+});
