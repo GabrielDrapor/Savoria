@@ -6,6 +6,11 @@ import {
   updateUrlWithYear,
   getCurrentYear
 } from './utils/yearUrl.js';
+import {
+  isYearCached,
+  getCachedYearData,
+  cacheYearData
+} from './utils/yearCache.js';
 
 export default {
   components: {
@@ -61,6 +66,24 @@ export default {
       return resp_json.data;
     },
     async reloadItems() {
+      // Check if data for this year is already cached
+      if (isYearCached(this.selectedYear)) {
+        const cachedData = getCachedYearData(this.selectedYear);
+        this.categoryItems = {
+          book: [...cachedData.book],
+          screen: [...cachedData.screen],
+          music: [...cachedData.music],
+          game: [...cachedData.game]
+        };
+        this.categoryLoading = {
+          book: false,
+          screen: false,
+          music: false,
+          game: false
+        };
+        return;
+      }
+
       // Set all categories to loading state
       this.categoryLoading = {
         book: true,
@@ -101,6 +124,9 @@ export default {
       const screenItems = await this.getScreenItems();
       this.categoryItems.screen = screenItems;
       this.categoryLoading.screen = false;
+
+      // Cache the fetched data for this year
+      cacheYearData(this.selectedYear, this.categoryItems);
     },
     onYearChange(year) {
       this.selectedYear = year;
