@@ -219,6 +219,7 @@ export default {
       aria-haspopup="listbox"
       :aria-activedescendant="focusedYear ? `year-option-id-${focusedYear}` : undefined"
       aria-controls="year-listbox"
+      aria-label="Select year to view"
       data-testid="year-selector-trigger"
     >
       <span class="selected-year" data-testid="selected-year">{{ selectedYear }}</span>

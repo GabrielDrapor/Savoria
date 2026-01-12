@@ -62,8 +62,8 @@ export default {
 </script>
 
 <template>
-  <div class="category-section" :data-category="category">
-    <h2 class="category-title">{{ title }}</h2>
+  <section class="category-section" :data-category="category" :aria-labelledby="`${category}-title`">
+    <h2 :id="`${category}-title`" class="category-title">{{ title }}</h2>
 
     <!-- Loading state -->
     <div v-if="showLoadingState" class="grid-container loading-grid" data-testid="loading-grid">
@@ -89,7 +89,7 @@ export default {
         @touch-activate="(isActive) => handleTouchActivate(index, isActive)"
       />
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
