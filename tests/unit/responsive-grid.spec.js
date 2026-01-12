@@ -72,7 +72,8 @@ describe('CategorySection Responsive Grid CSS', () => {
         props: {
           title: 'I read',
           items: [],
-          category: 'book'
+          category: 'book',
+          isLoading: true
         }
       });
 
@@ -87,7 +88,8 @@ describe('CategorySection Responsive Grid CSS', () => {
         props: {
           title: 'I read',
           items: [],
-          category: 'book'
+          category: 'book',
+          isLoading: true
         }
       });
 
