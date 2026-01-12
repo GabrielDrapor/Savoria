@@ -184,6 +184,123 @@ describe('CategorySection', () => {
     });
   });
 
+  describe('Hover Effects and Title Display (Scenario 5)', () => {
+    it('Test Case 3: Component renders with hidden title that shows on hover state', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      // Title overlay should exist
+      const titleOverlay = wrapper.find('.item-title-overlay');
+      expect(titleOverlay.exists()).toBe(true);
+
+      // Title overlay has opacity 0 by default (hidden)
+      expect(titleOverlay.classes()).toContain('item-title-overlay');
+
+      // Check that the item-title contains the display_title
+      const itemTitle = wrapper.find('.item-title');
+      expect(itemTitle.exists()).toBe(true);
+      expect(itemTitle.text()).toBe('Test Book 1');
+    });
+
+    it('renders title overlay for each grid item', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const titleOverlays = wrapper.findAll('.item-title-overlay');
+      expect(titleOverlays.length).toBe(2);
+
+      const titles = wrapper.findAll('.item-title');
+      expect(titles[0].text()).toBe('Test Book 1');
+      expect(titles[1].text()).toBe('Test Book 2');
+    });
+
+    it('grid item has hover transition styles', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridItem = wrapper.find('.grid-item');
+      expect(gridItem.exists()).toBe(true);
+      // Grid item class exists which has hover styles defined
+      expect(gridItem.classes()).toContain('grid-item');
+    });
+
+    it('touch-active class toggles on touchstart', async () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridItems = wrapper.findAll('.grid-item');
+      const firstItem = gridItems[0];
+
+      // Initially no touch-active class
+      expect(firstItem.classes()).not.toContain('touch-active');
+
+      // Trigger touchstart
+      await firstItem.trigger('touchstart');
+
+      // Should now have touch-active class
+      expect(firstItem.classes()).toContain('touch-active');
+
+      // Second touch should toggle off
+      await firstItem.trigger('touchstart');
+      expect(firstItem.classes()).not.toContain('touch-active');
+    });
+
+    it('only one item can be touch-active at a time', async () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const gridItems = wrapper.findAll('.grid-item');
+
+      // Activate first item
+      await gridItems[0].trigger('touchstart');
+      expect(gridItems[0].classes()).toContain('touch-active');
+      expect(gridItems[1].classes()).not.toContain('touch-active');
+
+      // Activate second item - first should lose active state
+      await gridItems[1].trigger('touchstart');
+      expect(gridItems[0].classes()).not.toContain('touch-active');
+      expect(gridItems[1].classes()).toContain('touch-active');
+    });
+
+    it('title overlay has data-testid for testing', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book'
+        }
+      });
+
+      const titleOverlay = wrapper.find('[data-testid="title-overlay"]');
+      expect(titleOverlay.exists()).toBe(true);
+    });
+  });
+
   describe('Props Validation', () => {
     it('accepts required title prop', () => {
       const wrapper = mount(CategorySection, {

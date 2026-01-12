@@ -15,9 +15,27 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      activeItemIndex: null
+    };
+  },
   computed: {
     hasItems() {
       return this.items && this.items.length > 0;
+    }
+  },
+  methods: {
+    handleTouchStart(index) {
+      // Toggle the active state for touch devices
+      if (this.activeItemIndex === index) {
+        this.activeItemIndex = null;
+      } else {
+        this.activeItemIndex = index;
+      }
+    },
+    isItemActive(index) {
+      return this.activeItemIndex === index;
     }
   }
 };
@@ -40,7 +58,9 @@ export default {
         v-for="(item, index) in items"
         :key="`${category}-${index}`"
         class="grid-item"
+        :class="{ 'touch-active': isItemActive(index) }"
         data-testid="grid-item"
+        @touchstart.passive="handleTouchStart(index)"
       >
         <img
           class="cover-img"
@@ -48,7 +68,7 @@ export default {
           :alt="item.item.display_title"
           loading="lazy"
         />
-        <div class="item-title-overlay">
+        <div class="item-title-overlay" data-testid="title-overlay">
           <span class="item-title">{{ item.item.display_title }}</span>
         </div>
       </div>
@@ -121,8 +141,19 @@ export default {
   transition: opacity 0.3s ease;
 }
 
-.grid-item:hover .item-title-overlay {
+.grid-item:hover .item-title-overlay,
+.grid-item.touch-active .item-title-overlay {
   opacity: 1;
+}
+
+/* Touch active state applies hover-like effects */
+.grid-item.touch-active {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+.grid-item.touch-active .cover-img {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
 }
 
 .item-title {
