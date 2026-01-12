@@ -165,7 +165,7 @@ test.describe('Hover Effects and Title Display (Scenario 5)', () => {
     const gridItem = page.locator('.grid-item').first();
     await expect(gridItem).toBeVisible({ timeout: 10000 });
 
-    // In the new CoverItem component, shadow is on .cover-container, not .cover-image
+    // Box-shadow is on .cover-container, not .cover-image
     const coverContainer = gridItem.locator('.cover-container');
 
     // Get initial box-shadow
@@ -291,25 +291,23 @@ test.describe('Hover Effects and Title Display (Scenario 5)', () => {
   });
 
   test('Cover image has alt text from display_title', async ({ page }) => {
-    // Wait for grid items to appear first (ensure page loaded)
-    await expect(page.locator('.grid-item').first()).toBeVisible({ timeout: 10000 });
+    // Wait for grid items first
+    const gridItem = page.locator('.grid-item').first();
+    await expect(gridItem).toBeVisible({ timeout: 10000 });
 
-    // Wait for either cover images or placeholders (image may fail to load from mock URL)
-    const coverImg = page.locator('.cover-image').first();
-    const placeholder = page.locator('.cover-placeholder').first();
+    // Check if we have a cover-image or placeholder (images may fail in test env)
+    const coverImg = gridItem.locator('.cover-image');
+    const placeholder = gridItem.locator('.cover-placeholder');
 
-    // Check if image is visible; if not, check placeholder has aria-label
-    const imageVisible = await coverImg.isVisible().catch(() => false);
-
-    if (imageVisible) {
-      // Check alt attribute on image
+    // Either image should have alt or placeholder should have aria-label
+    if (await coverImg.count() > 0) {
       const altText = await coverImg.getAttribute('alt');
       expect(altText).toBe('The Great Gatsby');
-    } else {
-      // Check aria-label on placeholder (fallback)
-      await expect(placeholder).toBeVisible({ timeout: 5000 });
+    } else if (await placeholder.count() > 0) {
       const ariaLabel = await placeholder.getAttribute('aria-label');
       expect(ariaLabel).toBe('The Great Gatsby');
+    } else {
+      throw new Error('Neither cover-image nor cover-placeholder found');
     }
   });
 });
