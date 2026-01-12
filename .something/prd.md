@@ -6,7 +6,7 @@
 The Savoria application currently displays media consumption (books, movies, TV shows, music, and games) in an auto-scrolling carousel format for a single year. Users who want to view historical years must rely on an external hyperlink-based approach that modifies the domain name (e.g., `savor2024.example.com` → `savor2023.example.com`). This creates a fragmented user experience and requires maintaining separate deployments or complex routing. Additionally, the current carousel UI, while visually appealing, makes it difficult to quickly browse and locate specific items among consumed media.
 
 ### Proposed Solution
-Implement native year navigation within the application, allowing users to seamlessly switch between years using an in-app year selector. Additionally, redesign the UI to display covers in a tiled grid layout organized by category, making it easier to browse and appreciate the collection of consumed media at a glance.
+Implement native year navigation within the application, allowing users to seamlessly switch between years using an in-app year selector. Additionally, **completely replace the existing auto-scrolling carousel with a CSS Grid layout**, displaying covers in a tiled grid organized by category. The carousel will be fully removed—not retained alongside the grid—making it easier to browse and appreciate the collection of consumed media at a glance.
 
 ### Expected Impact
 - **User Experience**: Unified, intuitive year navigation without external URL manipulation
@@ -30,7 +30,7 @@ Implement native year navigation within the application, allowing users to seaml
 |----|-------------|----------|
 | REQ-1 | Native year selector allowing users to switch between years without URL manipulation | Must |
 | REQ-2 | Year selector shall display available years based on user's NEODB history | Must |
-| REQ-3 | Grid/tiled layout for displaying covers organized by category | Must |
+| REQ-3 | Replace the auto-scrolling carousel with a CSS Grid layout for displaying covers organized by category (carousel to be completely removed) | Must |
 | REQ-4 | Each category section displays all items in a responsive grid format | Must |
 | REQ-5 | Cover images maintain aspect ratio and display consistently across the grid | Must |
 | REQ-6 | Year selection state persists in URL for shareability and bookmarking | Should |
@@ -310,10 +310,12 @@ Transform the existing auto-scrolling carousel into a responsive CSS Grid layout
 - **Tradeoffs**: Hardcoding is inflexible; new endpoint adds API surface; ±N years may show empty years
 - **Recommendation**: Allow selection of years from 2020 to current year (NEODB's typical usage period), gracefully handle empty years
 
-#### 3. Grid Layout Implementation
+#### 3. Grid Layout Implementation (Complete Carousel Replacement)
+- **Decision**: Completely remove the existing auto-scrolling carousel and replace with CSS Grid layout
 - **Options Considered**: CSS Grid native, CSS Flexbox with wrapping, third-party grid library (Masonry)
 - **Tradeoffs**: CSS Grid is cleanest for uniform items; Flexbox is simpler but less control; Masonry adds dependency
 - **Recommendation**: CSS Grid - native browser support, excellent for uniform-sized items, responsive with `auto-fill`/`auto-fit`
+- **Note**: The carousel component and related animation code will be removed entirely, not kept as an alternative view
 
 #### 4. Transition Animation
 - **Options Considered**: No animation, CSS fade transition, Vue transition component
