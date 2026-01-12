@@ -145,7 +145,7 @@ Implement native year navigation within the application, with each year having i
 - **Given** I am viewing the cover grid
 - **When** I hover over a cover image
 - **Then** I see the item's title displayed
-- **And** the cover has a visual hover effect (e.g., slight zoom or shadow)
+- **And** the cover significantly enlarges (e.g., 1.5x-2x zoom) to allow recognition of small covers in dense grids
 - **Given** I am on a touch device
 - **When** I tap on a cover
 - **Then** the title is displayed (touch-friendly alternative to hover)
@@ -179,7 +179,7 @@ Implement native year navigation within the application, with each year having i
 **Acceptance Criteria:**
 - **Given** I am on a mobile device (viewport < 768px)
 - **When** I view the gallery
-- **Then** the grid adapts to show fewer columns (e.g., 2-3 columns)
+- **Then** the grid adapts to show 3 columns
 - **And** covers remain properly sized and tappable
 - **And** the year navigation buttons are accessible and usable
 
@@ -249,13 +249,13 @@ Implement native year navigation within the application, with each year having i
 #### Category Grid Sections
 - Layout: Full-width sections, one per category
 - Header: Category title (e.g., "I read", "I watched", "I listened", "I played")
-- Grid: Responsive columns (5-6 on desktop, 3-4 on tablet, 2-3 on mobile)
+- Grid: Responsive columns (10 on desktop, 5 on tablet, 3 on mobile); covers may appear small at high column counts but enlarge on hover for recognition
 - Gap: Consistent spacing between cover items
 
 #### Cover Items
 - Aspect ratio: 3:4 (portrait/book-cover style, maintaining current design)
 - Size: Responsive based on grid columns
-- Hover state: Subtle scale/shadow effect with title overlay
+- Hover state: Significant scale enlargement (e.g., 1.5x-2x zoom) with title overlay, allowing easy recognition of small covers; shadow effect to lift hovered cover above grid
 - Loading state: Shimmer placeholder (existing behavior)
 
 #### Empty State
