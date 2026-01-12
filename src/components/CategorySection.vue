@@ -140,7 +140,7 @@ export default {
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(10, 1fr);
   gap: 20px;
   width: 100%;
   max-width: 100%;
@@ -222,7 +222,7 @@ export default {
 /* Loading state */
 .loading-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(10, 1fr);
   gap: 20px;
 }
 
@@ -259,23 +259,23 @@ export default {
 }
 
 /* Responsive breakpoints */
-/* Desktop: 5-6 columns on viewport > 1024px (NFR-2, US-6) */
+/* Desktop: 10 columns on viewport > 1024px (NFR-2, US-6, PRD Interface Requirements) */
 @media only screen and (min-width: 1025px) {
   .grid-container {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(10, 1fr);
     gap: 20px;
   }
 }
 
-/* Tablet: 3-4 columns on viewport 768px-1024px (NFR-2, US-6) */
+/* Tablet: 5 columns on viewport 768px-1024px (NFR-2, US-6, PRD Interface Requirements) */
 @media only screen and (min-width: 769px) and (max-width: 1024px) {
   .grid-container {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
   }
 }
 
-/* Mobile: 2-3 columns on viewport < 768px (NFR-2, US-6) */
+/* Mobile: 3 columns on viewport < 768px (NFR-2, US-6, PRD Interface Requirements) */
 @media only screen and (max-width: 768px) {
   .category-title {
     font-size: 2em;
@@ -283,7 +283,7 @@ export default {
   }
 
   .grid-container {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
   }
 }
