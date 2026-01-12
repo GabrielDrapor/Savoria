@@ -242,13 +242,23 @@ export default {
 }
 
 /* Responsive breakpoints */
-@media only screen and (min-width: 1200px) {
+/* Desktop: 5-6 columns on viewport > 1024px (NFR-2, US-6) */
+@media only screen and (min-width: 1025px) {
   .grid-container {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 24px;
+    gap: 20px;
   }
 }
 
+/* Tablet: 3-4 columns on viewport 768px-1024px (NFR-2, US-6) */
+@media only screen and (min-width: 769px) and (max-width: 1024px) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Mobile: 2-3 columns on viewport < 768px (NFR-2, US-6) */
 @media only screen and (max-width: 768px) {
   .category-title {
     font-size: 2em;

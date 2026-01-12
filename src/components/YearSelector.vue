@@ -206,8 +206,9 @@ export default {
 
 @media (max-width: 768px) {
   .year-selector-trigger {
-    padding: 6px 12px;
+    padding: 10px 16px;
     font-size: 1em;
+    min-height: 44px; /* WCAG touch target minimum */
   }
 
   .year-dropdown {
@@ -215,7 +216,8 @@ export default {
   }
 
   .year-option {
-    padding: 8px 12px;
+    padding: 12px 16px;
+    min-height: 44px; /* WCAG touch target minimum */
   }
 }
 </style>
