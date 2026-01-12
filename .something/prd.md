@@ -36,7 +36,7 @@ Implement native year navigation within the application, with each year having i
 | REQ-6 | Each year page has a dedicated URL path (e.g., `/2023`) for shareability and bookmarking | Should |
 | REQ-7 | Smooth animated page transition when navigating between year pages | Should |
 | REQ-8 | Empty state handling when a year has no data for a category | Must |
-| REQ-9 | Hover effects on cover images showing item title and additional details | Should |
+| REQ-9 | Hover effects on cover images with zoom enlargement (no title overlay) | Should |
 | REQ-10 | Category sections are collapsible or expandable for better navigation | Could |
 
 ### Non-Functional Requirements
@@ -136,19 +136,19 @@ Implement native year navigation within the application, with each year having i
 
 ---
 
-#### US-4: View Cover Details on Hover
+#### US-4: Zoom Cover on Hover
 **As a** Personal User
-**I want to** see more details about a media item when I hover over its cover
-**So that** I can recall the title and other details without navigating away
+**I want to** see an enlarged view of a media item when I hover over its cover
+**So that** I can recognize small covers in dense grids
 
 **Acceptance Criteria:**
 - **Given** I am viewing the cover grid
 - **When** I hover over a cover image
-- **Then** I see the item's title displayed
-- **And** the cover significantly enlarges (e.g., 1.5x-2x zoom) to allow recognition of small covers in dense grids
+- **Then** the cover significantly enlarges (e.g., 1.5x-2x zoom) to allow recognition of small covers in dense grids
+- **And** no title overlay is displayed on the cover
 - **Given** I am on a touch device
 - **When** I tap on a cover
-- **Then** the title is displayed (touch-friendly alternative to hover)
+- **Then** the cover enlarges (touch-friendly alternative to hover)
 
 **Priority:** Should
 **Related Requirements:** REQ-9
@@ -221,7 +221,7 @@ Implement native year navigation within the application, with each year having i
    └── Four category sections visible (Books, Screen, Music, Games)
    └── Each section shows grid of covers
    └── Vertical scrolling available for large collections
-   └── Hover/tap reveals item titles
+   └── Hover/tap enlarges covers for better recognition
 
 3. User wants to view different year
    └── Clicks "Previous year" or "Next year" button in header
@@ -255,7 +255,7 @@ Implement native year navigation within the application, with each year having i
 #### Cover Items
 - Aspect ratio: 3:4 (portrait/book-cover style, maintaining current design)
 - Size: Responsive based on grid columns
-- Hover state: Significant scale enlargement (e.g., 1.5x-2x zoom) with title overlay, allowing easy recognition of small covers; shadow effect to lift hovered cover above grid
+- Hover state: Significant scale enlargement (e.g., 1.5x-2x zoom) without title overlay, allowing easy recognition of small covers; shadow effect to lift hovered cover above grid
 - Loading state: Shimmer placeholder (existing behavior)
 
 #### Empty State
