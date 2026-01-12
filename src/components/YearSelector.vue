@@ -2,6 +2,7 @@
 /**
  * YearSelector component for navigating between years.
  * Allows users to switch between years without URL manipulation (REQ-1, US-1).
+ * Supports keyboard navigation (NFR-3, NFR-4, US-7).
  */
 export default {
   name: 'YearSelector',
@@ -18,7 +19,8 @@ export default {
   emits: ['update:selectedYear'],
   data() {
     return {
-      isOpen: false
+      isOpen: false,
+      focusedIndex: -1
     };
   },
   computed: {
@@ -28,6 +30,27 @@ export default {
      */
     availableYears() {
       return this.getYearRange(this.startYear, new Date().getFullYear());
+    },
+    /**
+     * Get the currently focused year based on focusedIndex.
+     * @returns {number|null} The focused year or null if none
+     */
+    focusedYear() {
+      return this.focusedIndex >= 0 ? this.availableYears[this.focusedIndex] : null;
+    }
+  },
+  watch: {
+    isOpen(newVal) {
+      if (newVal) {
+        // When opening, focus on currently selected year
+        const selectedIndex = this.availableYears.indexOf(this.selectedYear);
+        this.focusedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+        this.$nextTick(() => {
+          this.scrollToFocusedOption();
+        });
+      } else {
+        this.focusedIndex = -1;
+      }
     }
   },
   methods: {
@@ -47,9 +70,26 @@ export default {
     toggleDropdown() {
       this.isOpen = !this.isOpen;
     },
+    openDropdown() {
+      if (!this.isOpen) {
+        this.isOpen = true;
+      }
+    },
+    closeDropdown() {
+      if (this.isOpen) {
+        this.isOpen = false;
+        this.$refs.trigger?.focus();
+      }
+    },
     selectYear(year) {
       this.$emit('update:selectedYear', year);
       this.isOpen = false;
+      this.$refs.trigger?.focus();
+    },
+    selectFocusedYear() {
+      if (this.focusedIndex >= 0 && this.focusedIndex < this.availableYears.length) {
+        this.selectYear(this.availableYears[this.focusedIndex]);
+      }
     },
     handleClickOutside(event) {
       const dropdown = this.$refs.dropdown;
@@ -57,20 +97,111 @@ export default {
         this.isOpen = false;
       }
     },
-    handleKeydown(event) {
-      if (event.key === 'Escape') {
-        this.isOpen = false;
-        this.$refs.trigger?.focus();
+    /**
+     * Handle keyboard events on the trigger button (combobox).
+     * @param {KeyboardEvent} event
+     */
+    handleTriggerKeydown(event) {
+      switch (event.key) {
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          if (this.isOpen) {
+            this.selectFocusedYear();
+          } else {
+            this.openDropdown();
+          }
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          if (!this.isOpen) {
+            this.openDropdown();
+          } else {
+            this.moveFocus(1);
+          }
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          if (!this.isOpen) {
+            this.openDropdown();
+          } else {
+            this.moveFocus(-1);
+          }
+          break;
+        case 'Escape':
+          if (this.isOpen) {
+            event.preventDefault();
+            this.closeDropdown();
+          }
+          break;
+        case 'Home':
+          if (this.isOpen) {
+            event.preventDefault();
+            this.focusedIndex = 0;
+            this.scrollToFocusedOption();
+          }
+          break;
+        case 'End':
+          if (this.isOpen) {
+            event.preventDefault();
+            this.focusedIndex = this.availableYears.length - 1;
+            this.scrollToFocusedOption();
+          }
+          break;
+        case 'Tab':
+          // Close dropdown on Tab to allow normal tab navigation
+          if (this.isOpen) {
+            this.isOpen = false;
+          }
+          break;
       }
+    },
+    /**
+     * Handle global keydown events (for Escape when dropdown is open).
+     * @param {KeyboardEvent} event
+     */
+    handleGlobalKeydown(event) {
+      if (event.key === 'Escape' && this.isOpen) {
+        this.closeDropdown();
+      }
+    },
+    /**
+     * Move focus up or down in the dropdown list.
+     * @param {number} direction - 1 for down, -1 for up
+     */
+    moveFocus(direction) {
+      const newIndex = this.focusedIndex + direction;
+      if (newIndex >= 0 && newIndex < this.availableYears.length) {
+        this.focusedIndex = newIndex;
+        this.scrollToFocusedOption();
+      }
+    },
+    /**
+     * Scroll the focused option into view within the dropdown.
+     */
+    scrollToFocusedOption() {
+      this.$nextTick(() => {
+        const focusedOption = this.$refs[`option-${this.focusedIndex}`]?.[0];
+        if (focusedOption && typeof focusedOption.scrollIntoView === 'function') {
+          focusedOption.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    },
+    /**
+     * Handle mouse enter on year option to update focus.
+     * @param {number} index - Index of the hovered option
+     */
+    handleOptionMouseEnter(index) {
+      this.focusedIndex = index;
     }
   },
   mounted() {
     document.addEventListener('click', this.handleClickOutside);
-    document.addEventListener('keydown', this.handleKeydown);
+    document.addEventListener('keydown', this.handleGlobalKeydown);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
-    document.removeEventListener('keydown', this.handleKeydown);
+    document.removeEventListener('keydown', this.handleGlobalKeydown);
   }
 };
 </script>
@@ -82,30 +213,42 @@ export default {
       class="year-selector-trigger"
       :class="{ 'is-open': isOpen }"
       @click.stop="toggleDropdown"
+      @keydown="handleTriggerKeydown"
+      role="combobox"
       :aria-expanded="isOpen"
       aria-haspopup="listbox"
+      :aria-activedescendant="focusedYear ? `year-option-id-${focusedYear}` : undefined"
+      aria-controls="year-listbox"
       data-testid="year-selector-trigger"
     >
       <span class="selected-year" data-testid="selected-year">{{ selectedYear }}</span>
-      <span class="dropdown-arrow" :class="{ 'rotated': isOpen }">▼</span>
+      <span class="dropdown-arrow" :class="{ 'rotated': isOpen }" aria-hidden="true">▼</span>
     </button>
 
     <ul
       v-show="isOpen"
+      id="year-listbox"
       class="year-dropdown"
       role="listbox"
-      :aria-label="'Select year'"
+      aria-label="Select year"
       data-testid="year-dropdown"
     >
       <li
-        v-for="year in availableYears"
+        v-for="(year, index) in availableYears"
         :key="year"
+        :ref="`option-${index}`"
+        :id="`year-option-id-${year}`"
         class="year-option"
-        :class="{ 'selected': year === selectedYear }"
+        :class="{
+          'selected': year === selectedYear,
+          'focused': index === focusedIndex
+        }"
         role="option"
         :aria-selected="year === selectedYear"
         @click="selectYear(year)"
+        @mouseenter="handleOptionMouseEnter(index)"
         :data-testid="`year-option-${year}`"
+        :tabindex="-1"
       >
         {{ year }}
       </li>
@@ -195,13 +338,34 @@ export default {
   transition: background 0.15s ease;
 }
 
-.year-option:hover {
+.year-option:hover,
+.year-option.focused {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.year-option.focused {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -2px;
 }
 
 .year-option.selected {
   background: rgba(255, 255, 255, 0.15);
   font-weight: 700;
+}
+
+/* Visible focus indicator for trigger button */
+.year-selector-trigger:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.year-selector-trigger:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.year-selector-trigger:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
