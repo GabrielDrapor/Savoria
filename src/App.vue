@@ -33,12 +33,19 @@ export default {
         music: true,
         game: true
       },
+      categoryError: {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
+      },
       categories: {
         book: "I read",
         screen: "I watched",
         music: "I listened",
         game: "I played",
-      }
+      },
+      fetchTimeout: 10000 // 10 second timeout for API calls
     };
   },
   methods: {
@@ -49,21 +56,57 @@ export default {
       this.selectedYear = getYearFromUrlWithFallback(window.location.search);
       this.reloadItems();
     },
+    async fetchWithTimeout(url, timeout) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+    },
     async getCompletedItems(type) {
       const baseUrl = process.env.NODE_ENV === 'development'
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/${type}/${this.selectedYear}`);
-      const resp_json = await req.json();
-      return resp_json.data;
+
+      try {
+        const req = await this.fetchWithTimeout(
+          baseUrl + `/api/complete/${type}/${this.selectedYear}`,
+          this.fetchTimeout
+        );
+        const resp_json = await req.json();
+        return { data: resp_json.data, error: false };
+      } catch (error) {
+        console.error(`Error fetching ${type}:`, error);
+        return { data: [], error: true };
+      }
     },
     async getScreenItems() {
       const baseUrl = process.env.NODE_ENV === 'development'
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/screen/${this.selectedYear}`);
-      const resp_json = await req.json();
-      return resp_json.data;
+
+      try {
+        const req = await this.fetchWithTimeout(
+          baseUrl + `/api/complete/screen/${this.selectedYear}`,
+          this.fetchTimeout
+        );
+        const resp_json = await req.json();
+        return { data: resp_json.data, error: false };
+      } catch (error) {
+        console.error('Error fetching screen:', error);
+        return { data: [], error: true };
+      }
     },
     async reloadItems() {
       // Check if data for this year is already cached
@@ -81,15 +124,27 @@ export default {
           music: false,
           game: false
         };
+        this.categoryError = {
+          book: false,
+          screen: false,
+          music: false,
+          game: false
+        };
         return;
       }
 
-      // Set all categories to loading state
+      // Set all categories to loading state and reset errors
       this.categoryLoading = {
         book: true,
         screen: true,
         music: true,
         game: true
+      };
+      this.categoryError = {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
       };
       this.categoryItems = {
         book: [],
@@ -107,6 +162,12 @@ export default {
         music: true,
         game: true
       };
+      this.categoryError = {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
+      };
       this.categoryItems = {
         book: [],
         screen: [],
@@ -116,17 +177,38 @@ export default {
 
       const types = ['book', 'music', 'game'];
       for (let type of types) {
-        const items = await this.getCompletedItems(type);
-        this.categoryItems[type] = items;
+        const result = await this.getCompletedItems(type);
+        this.categoryItems[type] = result.data;
+        this.categoryError[type] = result.error;
         this.categoryLoading[type] = false;
       }
 
-      const screenItems = await this.getScreenItems();
-      this.categoryItems.screen = screenItems;
+      const screenResult = await this.getScreenItems();
+      this.categoryItems.screen = screenResult.data;
+      this.categoryError.screen = screenResult.error;
       this.categoryLoading.screen = false;
 
-      // Cache the fetched data for this year
-      cacheYearData(this.selectedYear, this.categoryItems);
+      // Only cache data if there were no errors
+      const hasAnyError = Object.values(this.categoryError).some(e => e);
+      if (!hasAnyError) {
+        cacheYearData(this.selectedYear, this.categoryItems);
+      }
+    },
+    async retryCategory(category) {
+      // Set loading state for this category
+      this.categoryLoading[category] = true;
+      this.categoryError[category] = false;
+
+      let result;
+      if (category === 'screen') {
+        result = await this.getScreenItems();
+      } else {
+        result = await this.getCompletedItems(category);
+      }
+
+      this.categoryItems[category] = result.data;
+      this.categoryError[category] = result.error;
+      this.categoryLoading[category] = false;
     },
     onYearChange(year) {
       this.selectedYear = year;
@@ -176,6 +258,8 @@ export default {
         :items="items"
         :category="category"
         :is-loading="categoryLoading[category]"
+        :is-error="categoryError[category]"
+        @retry="retryCategory"
       />
     </div>
   </Transition>

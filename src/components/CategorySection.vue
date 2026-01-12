@@ -22,6 +22,14 @@ export default {
     isLoading: {
       type: Boolean,
       default: false
+    },
+    isError: {
+      type: Boolean,
+      default: false
+    },
+    errorMessage: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -33,8 +41,11 @@ export default {
     hasItems() {
       return this.items && this.items.length > 0;
     },
+    showErrorState() {
+      return !this.isLoading && this.isError;
+    },
     showEmptyState() {
-      return !this.isLoading && !this.hasItems;
+      return !this.isLoading && !this.isError && !this.hasItems;
     },
     showLoadingState() {
       return this.isLoading && !this.hasItems;
@@ -56,6 +67,9 @@ export default {
           this.activeItemIndex = null;
         }
       }
+    },
+    handleRetry() {
+      this.$emit('retry', this.category);
     }
   }
 };
@@ -70,6 +84,19 @@ export default {
       <div v-for="n in 8" :key="n" class="loading-item">
         <div class="loading-shimmer"></div>
       </div>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="showErrorState" class="error-state" data-testid="error-state">
+      <p class="error-message">Something went wrong. Please try again.</p>
+      <button
+        class="retry-button"
+        data-testid="retry-button"
+        @click="handleRetry"
+        aria-label="Retry loading content"
+      >
+        Try Again
+      </button>
     </div>
 
     <!-- Empty state -->
@@ -140,6 +167,56 @@ export default {
   font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
   margin: 0;
   padding: 2rem;
+}
+
+/* Error state */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  width: 100%;
+  gap: 1rem;
+}
+
+.error-message {
+  color: rgba(255, 180, 180, 0.8);
+  font-size: 1.1em;
+  font-weight: 300;
+  text-align: center;
+  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  margin: 0;
+  padding: 1rem 2rem;
+}
+
+.retry-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95em;
+  font-weight: 400;
+  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.retry-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.retry-button:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.98);
 }
 
 /* Loading state */
