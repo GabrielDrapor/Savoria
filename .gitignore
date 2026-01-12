@@ -32,3 +32,4 @@ coverage
 .something/
 playwright-report/
 test-results/
+.system-artifacts
