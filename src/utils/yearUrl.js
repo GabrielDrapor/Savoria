@@ -1,6 +1,6 @@
 /**
  * URL State Persistence utilities for year selection
- * Supports parsing, validation, and updating of year in URL query parameters
+ * Supports parsing, validation, and updating of year in URL (path or query parameters)
  */
 
 const EARLIEST_SUPPORTED_YEAR = 2020;
@@ -11,6 +11,26 @@ const EARLIEST_SUPPORTED_YEAR = 2020;
  */
 export function getCurrentYear() {
   return new Date().getFullYear();
+}
+
+/**
+ * Parse year from URL path (e.g., "/2023" or "/2023/")
+ * @param {string} pathname - URL pathname
+ * @returns {number|null} Parsed year as integer or null if not present/invalid
+ */
+export function parseYearFromPath(pathname) {
+  // Match patterns like /2023, /2023/, etc.
+  const match = pathname.match(/^\/(\d{4})\/?$/);
+  if (!match) {
+    return null;
+  }
+
+  const parsed = parseInt(match[1], 10);
+  if (isNaN(parsed)) {
+    return null;
+  }
+
+  return parsed;
 }
 
 /**
@@ -47,12 +67,22 @@ export function isValidYear(year) {
 
 /**
  * Get the year to display, with fallback logic for invalid values
+ * Checks both URL path (e.g., /2023) and query parameter (e.g., ?year=2023)
+ * Path takes precedence over query parameter
  * @param {string} search - URL search string
+ * @param {string} pathname - URL pathname (optional, defaults to window.location.pathname)
  * @returns {number} Valid year to display
  */
-export function getYearFromUrlWithFallback(search) {
-  const parsed = parseYearFromUrl(search);
+export function getYearFromUrlWithFallback(search, pathname = '') {
   const currentYear = getCurrentYear();
+
+  // First try to parse from path (e.g., /2023)
+  let parsed = parseYearFromPath(pathname);
+
+  // If not found in path, try query parameter
+  if (parsed === null) {
+    parsed = parseYearFromUrl(search);
+  }
 
   // No year parameter - use current year
   if (parsed === null) {
@@ -91,9 +121,19 @@ export function buildUrlWithYear(year, currentSearch = '') {
 
 /**
  * Update the browser URL with the selected year without page reload
+ * Uses path-based URL (e.g., /2023) instead of query parameter
  * @param {number} year - Year to set in URL
  */
 export function updateUrlWithYear(year) {
+  const newUrl = `/${year}`;
+  window.history.pushState({ year }, '', newUrl);
+}
+
+/**
+ * Update the browser URL with the selected year using query parameter (legacy)
+ * @param {number} year - Year to set in URL
+ */
+export function updateUrlWithYearQuery(year) {
   const newSearch = buildUrlWithYear(year, window.location.search);
   const newUrl = window.location.pathname + newSearch;
   window.history.pushState({ year }, '', newUrl);

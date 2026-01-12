@@ -261,12 +261,13 @@ describe('Visual Design Consistency (Scenario 17)', () => {
       expect(categorySectionVue).toContain('gap: 12px');
     });
 
-    it('CategorySection uses grid-template-columns with auto-fit', () => {
-      expect(categorySectionVue).toContain('grid-template-columns: repeat(auto-fit');
-    });
-
-    it('CategorySection uses minmax for responsive column sizing', () => {
-      expect(categorySectionVue).toContain('minmax(');
+    it('CategorySection uses grid-template-columns with responsive column counts', () => {
+      // Desktop: 10 columns
+      expect(categorySectionVue).toContain('grid-template-columns: repeat(10, 1fr)');
+      // Tablet: 5 columns
+      expect(categorySectionVue).toContain('grid-template-columns: repeat(5, 1fr)');
+      // Mobile: 3 columns
+      expect(categorySectionVue).toContain('grid-template-columns: repeat(3, 1fr)');
     });
   });
 

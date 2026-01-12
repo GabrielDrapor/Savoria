@@ -1,5 +1,6 @@
 <script>
 import YearSelector from './components/YearSelector.vue';
+import YearNavigationButtons from './components/YearNavigationButtons.vue';
 import CategorySection from './components/CategorySection.vue';
 import {
   getYearFromUrlWithFallback,
@@ -15,6 +16,7 @@ import {
 export default {
   components: {
     YearSelector,
+    YearNavigationButtons,
     CategorySection
   },
   data() {
@@ -50,10 +52,10 @@ export default {
   },
   methods: {
     initializeYearFromUrl() {
-      this.selectedYear = getYearFromUrlWithFallback(window.location.search);
+      this.selectedYear = getYearFromUrlWithFallback(window.location.search, window.location.pathname);
     },
     handlePopState() {
-      this.selectedYear = getYearFromUrlWithFallback(window.location.search);
+      this.selectedYear = getYearFromUrlWithFallback(window.location.search, window.location.pathname);
       this.reloadItems();
     },
     async fetchWithTimeout(url, timeout) {
@@ -233,7 +235,7 @@ export default {
 
 <template>
   <div class="header-container">
-    <YearSelector
+    <YearNavigationButtons
       :selected-year="selectedYear"
       @update:selected-year="onYearChange"
     />

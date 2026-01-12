@@ -3,6 +3,7 @@ import {
   getAvailableYears,
   getCurrentYear,
   parseYearFromUrl,
+  parseYearFromPath,
   updateUrlWithYear,
   getYearFromUrlWithFallback,
   isValidYear,
@@ -72,6 +73,43 @@ describe('yearUrl utilities', () => {
     });
   });
 
+  describe('parseYearFromPath', () => {
+    it('returns null when path is root /', () => {
+      const result = parseYearFromPath('/');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when path is empty', () => {
+      const result = parseYearFromPath('');
+      expect(result).toBeNull();
+    });
+
+    it('returns parsed year when path is /2023', () => {
+      const result = parseYearFromPath('/2023');
+      expect(result).toBe(2023);
+    });
+
+    it('returns parsed year when path has trailing slash /2023/', () => {
+      const result = parseYearFromPath('/2023/');
+      expect(result).toBe(2023);
+    });
+
+    it('returns null when path contains non-year segments', () => {
+      const result = parseYearFromPath('/2023/books');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when path contains non-numeric year', () => {
+      const result = parseYearFromPath('/abc');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when path year is not 4 digits', () => {
+      const result = parseYearFromPath('/23');
+      expect(result).toBeNull();
+    });
+  });
+
   describe('isValidYear', () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -115,27 +153,47 @@ describe('yearUrl utilities', () => {
     });
 
     it('returns current year when no year parameter is present', () => {
-      const result = getYearFromUrlWithFallback('');
+      const result = getYearFromUrlWithFallback('', '/');
       expect(result).toBe(2026);
     });
 
     it('returns parsed year when valid year parameter is present', () => {
-      const result = getYearFromUrlWithFallback('?year=2023');
+      const result = getYearFromUrlWithFallback('?year=2023', '/');
       expect(result).toBe(2023);
     });
 
     it('returns earliest supported year when year is too old', () => {
-      const result = getYearFromUrlWithFallback('?year=2019');
+      const result = getYearFromUrlWithFallback('?year=2019', '/');
       expect(result).toBe(EARLIEST_SUPPORTED_YEAR);
     });
 
     it('returns current year when year is in the future', () => {
-      const result = getYearFromUrlWithFallback('?year=2030');
+      const result = getYearFromUrlWithFallback('?year=2030', '/');
       expect(result).toBe(2026);
     });
 
     it('returns current year when year is invalid', () => {
-      const result = getYearFromUrlWithFallback('?year=abc');
+      const result = getYearFromUrlWithFallback('?year=abc', '/');
+      expect(result).toBe(2026);
+    });
+
+    it('returns parsed year from path when path has year', () => {
+      const result = getYearFromUrlWithFallback('', '/2023');
+      expect(result).toBe(2023);
+    });
+
+    it('path takes precedence over query parameter', () => {
+      const result = getYearFromUrlWithFallback('?year=2024', '/2023');
+      expect(result).toBe(2023);
+    });
+
+    it('returns earliest supported year when path year is too old', () => {
+      const result = getYearFromUrlWithFallback('', '/2019');
+      expect(result).toBe(EARLIEST_SUPPORTED_YEAR);
+    });
+
+    it('returns current year when path year is in the future', () => {
+      const result = getYearFromUrlWithFallback('', '/2030');
       expect(result).toBe(2026);
     });
   });
@@ -160,14 +218,14 @@ describe('yearUrl utilities', () => {
       pushStateSpy.mockRestore();
     });
 
-    it('updates URL with year parameter', () => {
+    it('updates URL with year path', () => {
       updateUrlWithYear(2023);
 
       expect(pushStateSpy).toHaveBeenCalledTimes(1);
       expect(pushStateSpy).toHaveBeenCalledWith(
         { year: 2023 },
         '',
-        expect.stringContaining('year=2023')
+        '/2023'
       );
     });
   });
