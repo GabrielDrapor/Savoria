@@ -1,18 +1,20 @@
 <script>
+import YearSelector from './components/YearSelector.vue';
+import CategorySection from './components/CategorySection.vue';
 import {
   getYearFromUrlWithFallback,
   updateUrlWithYear,
-  getAvailableYears,
   getCurrentYear
 } from './utils/yearUrl.js';
-import CategorySection from './components/CategorySection.vue';
 
 export default {
   components: {
+    YearSelector,
     CategorySection
   },
   data() {
     return {
+      selectedYear: getCurrentYear(),
       categoryItems: {
         book: [],
         screen: [],
@@ -24,20 +26,12 @@ export default {
         screen: "I watched",
         music: "I listened",
         game: "I played",
-      },
-      selectedYear: getCurrentYear(),
-      availableYears: getAvailableYears()
+      }
     };
   },
   methods: {
     initializeYearFromUrl() {
       this.selectedYear = getYearFromUrlWithFallback(window.location.search);
-    },
-    onYearChange(event) {
-      const year = parseInt(event.target.value, 10);
-      this.selectedYear = year;
-      updateUrlWithYear(year);
-      this.reloadItems();
     },
     handlePopState() {
       this.selectedYear = getYearFromUrlWithFallback(window.location.search);
@@ -69,6 +63,14 @@ export default {
       await this.getAllItems();
     },
     async getAllItems() {
+      // Reset items to trigger loading state
+      this.categoryItems = {
+        book: [],
+        screen: [],
+        music: [],
+        game: []
+      };
+
       const types = ['book', 'music', 'game'];
       for (let type of types) {
         const items = await this.getCompletedItems(type);
@@ -77,6 +79,11 @@ export default {
 
       const screenItems = await this.getScreenItems();
       this.categoryItems.screen = screenItems;
+    },
+    onYearChange(year) {
+      this.selectedYear = year;
+      updateUrlWithYear(year);
+      this.reloadItems();
     }
   },
   mounted() {
@@ -91,18 +98,11 @@ export default {
 </script>
 
 <template>
-  <div class="yearSelectorContainer">
-    <select
-      data-testid="year-selector"
-      class="yearSelector"
-      :value="selectedYear"
-      @change="onYearChange"
-      aria-label="Select year"
-    >
-      <option v-for="year in availableYears" :key="year" :value="year">
-        {{ year }}
-      </option>
-    </select>
+  <div class="header-container">
+    <YearSelector
+      :selected-year="selectedYear"
+      @update:selected-year="onYearChange"
+    />
   </div>
   <h1 class="pageTitle">In {{ selectedYear }},</h1>
 
@@ -118,45 +118,12 @@ export default {
 </template>
 
 <style>
-.yearSelectorContainer {
+.header-container {
   display: flex;
   justify-content: center;
-  margin: 20px 0 0 0;
-  z-index: 10;
+  padding: 20px;
   position: relative;
-}
-
-.yearSelector {
-  padding: 8px 24px 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  color: #f3f3f3;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
-  font-size: 1em;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f3f3f3' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-}
-
-.yearSelector:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.yearSelector:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-}
-
-.yearSelector option {
-  background: #1a1a2e;
-  color: #f3f3f3;
+  z-index: 10;
 }
 
 .pageTitle {
