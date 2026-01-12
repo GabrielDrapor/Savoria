@@ -244,7 +244,7 @@ export default {
 /* Responsive breakpoints */
 @media only screen and (min-width: 1200px) {
   .grid-container {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 24px;
   }
 }
