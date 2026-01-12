@@ -15,6 +15,7 @@ export default {
   data() {
     return {
       selectedYear: getCurrentYear(),
+      isTransitioning: false,
       categoryItems: {
         book: [],
         screen: [],
@@ -104,7 +105,11 @@ export default {
     onYearChange(year) {
       this.selectedYear = year;
       updateUrlWithYear(year);
+      this.isTransitioning = true;
       this.reloadItems();
+    },
+    onTransitionEnd() {
+      this.isTransitioning = false;
     }
   },
   mounted() {
@@ -127,16 +132,27 @@ export default {
   </div>
   <h1 class="pageTitle">In {{ selectedYear }},</h1>
 
-  <div class="gallery-container" data-testid="gallery-container">
-    <CategorySection
-      v-for="(items, category) in categoryItems"
-      :key="category"
-      :title="categories[category]"
-      :items="items"
-      :category="category"
-      :is-loading="categoryLoading[category]"
-    />
-  </div>
+  <Transition
+    name="fade"
+    mode="out-in"
+    @after-enter="onTransitionEnd"
+    @after-leave="onTransitionEnd"
+  >
+    <div
+      class="gallery-container"
+      data-testid="gallery-container"
+      :key="selectedYear"
+    >
+      <CategorySection
+        v-for="(items, category) in categoryItems"
+        :key="category"
+        :title="categories[category]"
+        :items="items"
+        :category="category"
+        :is-loading="categoryLoading[category]"
+      />
+    </div>
+  </Transition>
 </template>
 
 <style>
@@ -181,6 +197,30 @@ export default {
 
   .gallery-container {
     gap: 30px;
+  }
+}
+
+/* Vue transition classes for fade effect (REQ-7) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Respect prefers-reduced-motion (NFR-6) */
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 1;
   }
 }
 </style>
