@@ -134,8 +134,8 @@ describe('CategorySection', () => {
         }
       });
 
-      // Should show grid container with items
-      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      // Should show grid container with items (dynamic testid based on category)
+      const gridContainer = wrapper.find('[data-testid="items-grid-book"]');
       expect(gridContainer.exists()).toBe(true);
 
       // Should not show empty state
@@ -195,8 +195,8 @@ describe('CategorySection', () => {
       expect(title.exists()).toBe(true);
       expect(title.text()).toBe('I read');
 
-      // Check grid container is rendered
-      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      // Check grid container is rendered (dynamic testid based on category)
+      const gridContainer = wrapper.find('[data-testid="items-grid-book"]');
       expect(gridContainer.exists()).toBe(true);
 
       // Check data-category attribute
@@ -251,8 +251,9 @@ describe('CategorySection', () => {
         }
       });
 
-      const gridItems = wrapper.findAll('[data-testid="grid-item"]');
-      expect(gridItems.length).toBe(2);
+      // CoverItem components are rendered as grid items
+      const coverItems = wrapper.findAll('[data-testid="cover-item"]');
+      expect(coverItems.length).toBe(2);
     });
 
     it('renders cover images with correct attributes', () => {
@@ -264,7 +265,8 @@ describe('CategorySection', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      // Images are now inside CoverItem components
+      const images = wrapper.findAll('.cover-image');
       expect(images.length).toBe(2);
 
       // Check first image
@@ -303,7 +305,7 @@ describe('CategorySection', () => {
         }
       });
 
-      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      const gridContainer = wrapper.find('[data-testid="items-grid-book"]');
       expect(gridContainer.exists()).toBe(true);
       expect(gridContainer.classes()).toContain('grid-container');
     });
@@ -317,12 +319,16 @@ describe('CategorySection', () => {
         }
       });
 
+      // CoverItem components are rendered with the grid-item class
       const gridItems = wrapper.findAll('.grid-item');
       expect(gridItems.length).toBe(2);
 
-      // Each grid item should contain an image and title overlay
+      // Each grid item (CoverItem) should contain an image (or placeholder) and title overlay
       gridItems.forEach(item => {
-        expect(item.find('.cover-img').exists()).toBe(true);
+        // CoverItem uses cover-image class (not cover-img)
+        const hasImage = item.find('.cover-image').exists();
+        const hasPlaceholder = item.find('.cover-placeholder').exists();
+        expect(hasImage || hasPlaceholder).toBe(true);
         expect(item.find('.item-title-overlay').exists()).toBe(true);
       });
     });
@@ -484,7 +490,7 @@ describe('CategorySection', () => {
       });
 
       expect(wrapper.find('[data-testid="loading-grid"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="items-grid-book"]').exists()).toBe(false);
     });
 
     it('handles empty items array gracefully with empty state', () => {

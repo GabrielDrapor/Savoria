@@ -165,7 +165,7 @@ test.describe('Hover Effects and Title Display (Scenario 5)', () => {
     const gridItem = page.locator('.grid-item').first();
     await expect(gridItem).toBeVisible({ timeout: 10000 });
 
-    const coverImg = gridItem.locator('.cover-img');
+    const coverImg = gridItem.locator('.cover-image');
 
     // Get initial box-shadow
     const initialShadow = await coverImg.evaluate(el => {
@@ -291,7 +291,7 @@ test.describe('Hover Effects and Title Display (Scenario 5)', () => {
 
   test('Cover image has alt text from display_title', async ({ page }) => {
     // Wait for cover images
-    const coverImg = page.locator('.cover-img').first();
+    const coverImg = page.locator('.cover-image').first();
     await expect(coverImg).toBeVisible({ timeout: 10000 });
 
     // Check alt attribute

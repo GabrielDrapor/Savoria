@@ -1,6 +1,11 @@
 <script>
+import CoverItem from './CoverItem.vue';
+
 export default {
   name: 'CategorySection',
+  components: {
+    CoverItem
+  },
   props: {
     title: {
       type: String,
@@ -36,16 +41,21 @@ export default {
     }
   },
   methods: {
-    handleTouchStart(index) {
-      // Toggle the active state for touch devices
-      if (this.activeItemIndex === index) {
-        this.activeItemIndex = null;
-      } else {
+    handleTouchActivate(index, isActive) {
+      if (isActive) {
+        // Deactivate previously active item
+        if (this.activeItemIndex !== null && this.activeItemIndex !== index) {
+          const prevItem = this.$refs[`coverItem-${this.activeItemIndex}`];
+          if (prevItem && prevItem[0]) {
+            prevItem[0].deactivate();
+          }
+        }
         this.activeItemIndex = index;
+      } else {
+        if (this.activeItemIndex === index) {
+          this.activeItemIndex = null;
+        }
       }
-    },
-    isItemActive(index) {
-      return this.activeItemIndex === index;
     }
   }
 };
@@ -68,25 +78,16 @@ export default {
     </div>
 
     <!-- Grid with items -->
-    <div v-else class="grid-container" data-testid="grid-container">
-      <div
+    <div v-else class="grid-container" :data-testid="'items-grid-' + category">
+      <CoverItem
         v-for="(item, index) in items"
         :key="`${category}-${index}`"
+        :ref="`coverItem-${index}`"
+        :cover-image-url="item.item.cover_image_url"
+        :display-title="item.item.display_title"
         class="grid-item"
-        :class="{ 'touch-active': isItemActive(index) }"
-        data-testid="grid-item"
-        @touchstart.passive="handleTouchStart(index)"
-      >
-        <img
-          class="cover-img"
-          :src="item.item.cover_image_url"
-          :alt="item.item.display_title"
-          loading="lazy"
-        />
-        <div class="item-title-overlay" data-testid="title-overlay">
-          <span class="item-title">{{ item.item.display_title }}</span>
-        </div>
-      </div>
+        @touch-activate="(isActive) => handleTouchActivate(index, isActive)"
+      />
     </div>
   </div>
 </template>
@@ -119,68 +120,7 @@ export default {
 }
 
 .grid-item {
-  aspect-ratio: 3/4;
-  position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.grid-item:hover {
-  transform: scale(1.05);
-  z-index: 10;
-}
-
-.cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: box-shadow 0.3s ease;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.grid-item:hover .cover-img {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-}
-
-.item-title-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  padding: 2rem 0.5rem 0.5rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.grid-item:hover .item-title-overlay,
-.grid-item.touch-active .item-title-overlay {
-  opacity: 1;
-}
-
-/* Touch active state applies hover-like effects */
-.grid-item.touch-active {
-  transform: scale(1.05);
-  z-index: 10;
-}
-
-.grid-item.touch-active .cover-img {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-}
-
-.item-title {
-  color: #fff;
-  font-size: 0.85em;
-  font-weight: 400;
-  display: block;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  /* CoverItem component handles internal styling */
 }
 
 /* Empty state */
@@ -269,18 +209,9 @@ export default {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 12px;
   }
-
-  .item-title-overlay {
-    opacity: 1;
-    background: linear-gradient(transparent 30%, rgba(0, 0, 0, 0.8));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grid-item:hover {
-    transform: none;
-  }
-
   .loading-shimmer {
     animation: none;
   }

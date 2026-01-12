@@ -242,9 +242,9 @@ test.describe('Empty State Handling (REQ-8, US-5)', () => {
     // Verify books section has grid with items
     const booksSection = page.locator('[data-category="book"]');
     await expect(booksSection).toBeVisible({ timeout: 10000 });
-    const booksGrid = booksSection.locator('[data-testid="grid-container"]');
+    const booksGrid = booksSection.locator('[data-testid="items-grid-book"]');
     await expect(booksGrid).toBeVisible();
-    const bookItems = booksSection.locator('[data-testid="grid-item"]');
+    const bookItems = booksSection.locator('[data-testid="cover-item"]');
     expect(await bookItems.count()).toBe(3);
 
     // Verify music section shows empty state
