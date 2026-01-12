@@ -6,7 +6,7 @@
 The Savoria application currently displays media consumption (books, movies, TV shows, music, and games) in an auto-scrolling carousel format for a single year. Users who want to view historical years must rely on an external hyperlink-based approach that modifies the domain name (e.g., `savor2024.example.com` → `savor2023.example.com`). This creates a fragmented user experience and requires maintaining separate deployments or complex routing. Additionally, the current carousel UI, while visually appealing, makes it difficult to quickly browse and locate specific items among consumed media.
 
 ### Proposed Solution
-Implement native year navigation within the application, allowing users to seamlessly switch between years using an in-app year selector. Additionally, **completely replace the existing auto-scrolling carousel with a CSS Grid layout**, displaying covers in a tiled grid organized by category. The carousel will be fully removed—not retained alongside the grid—making it easier to browse and appreciate the collection of consumed media at a glance.
+Implement native year navigation within the application, with each year having its own dedicated page. Users navigate between years via navigation links rather than a dropdown selector. Additionally, **completely replace the existing auto-scrolling carousel with a CSS Grid layout**, displaying covers in a tiled grid organized by category. The carousel will be fully removed—not retained alongside the grid—making it easier to browse and appreciate the collection of consumed media at a glance.
 
 ### Expected Impact
 - **User Experience**: Unified, intuitive year navigation without external URL manipulation
@@ -28,13 +28,13 @@ Implement native year navigation within the application, allowing users to seaml
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| REQ-1 | Native year selector allowing users to switch between years without URL manipulation | Must |
-| REQ-2 | Year selector shall display available years based on user's NEODB history | Must |
+| REQ-1 | Each year has its own dedicated page with year navigation links to switch between years | Must |
+| REQ-2 | Year navigation links display available years based on user's NEODB history | Must |
 | REQ-3 | Replace the auto-scrolling carousel with a CSS Grid layout for displaying covers organized by category (carousel to be completely removed) | Must |
 | REQ-4 | Each category section displays all items in a responsive grid format | Must |
 | REQ-5 | Cover images maintain aspect ratio and display consistently across the grid | Must |
-| REQ-6 | Year selection state persists in URL for shareability and bookmarking | Should |
-| REQ-7 | Smooth animated transition when switching years | Should |
+| REQ-6 | Each year page has a dedicated URL path (e.g., `/2023`) for shareability and bookmarking | Should |
+| REQ-7 | Smooth animated page transition when navigating between year pages | Should |
 | REQ-8 | Empty state handling when a year has no data for a category | Must |
 | REQ-9 | Hover effects on cover images showing item title and additional details | Should |
 | REQ-10 | Category sections are collapsible or expandable for better navigation | Could |
@@ -60,9 +60,9 @@ Implement native year navigation within the application, allowing users to seaml
 - Export functionality for media lists
 
 ### Success Criteria
-- SC-1: Year selector allows navigation to any year from the earliest NEODB record to current year
-- SC-2: Grid layout displays all covers for a category without requiring animation/scrolling to reveal items
-- SC-3: URL reflects selected year (e.g., `?year=2023`) enabling direct linking
+- SC-1: Year navigation allows access to any year from the earliest NEODB record to current year via dedicated pages
+- SC-2: Grid layout displays all covers for a category; vertical scrolling within a year's page is acceptable for large collections
+- SC-3: Each year has a dedicated URL path (e.g., `/2023`) enabling direct linking
 - SC-4: All existing NEODB integration functionality continues to work
 - SC-5: Visual design maintains the aesthetic quality of the current implementation
 
@@ -78,17 +78,17 @@ Implement native year navigation within the application, allowing users to seaml
 
 #### US-1: View Different Year's Collection
 **As a** Personal User
-**I want to** select and view my media consumption from any historical year
+**I want to** navigate to any historical year's dedicated page
 **So that** I can reminisce about what I read, watched, listened to, and played in past years
 
 **Acceptance Criteria:**
-- **Given** I am on the main gallery page
-- **When** I click on the year selector
-- **Then** I see a list of available years from my earliest NEODB record to the current year
-- **Given** the year selector is open
-- **When** I select a different year (e.g., 2023)
-- **Then** the page displays my media consumption for that year
-- **And** the URL updates to reflect the selected year
+- **Given** I am on any year's gallery page
+- **When** I look at the year navigation
+- **Then** I see links to available years from my earliest NEODB record to the current year
+- **Given** I click on a different year link (e.g., 2023)
+- **When** the navigation completes
+- **Then** I am on the 2023 year page displaying my media consumption for that year
+- **And** the URL reflects the year path (e.g., `/2023`)
 
 **Priority:** Must
 **Related Requirements:** REQ-1, REQ-2, REQ-6
@@ -122,7 +122,7 @@ Implement native year navigation within the application, allowing users to seaml
 **Acceptance Criteria:**
 - **Given** I am viewing 2023's collection
 - **When** I copy the URL from the browser
-- **Then** the URL contains the year parameter (e.g., `?year=2023`)
+- **Then** the URL is the year page path (e.g., `/2023`)
 - **Given** a Visitor receives and opens this URL
 - **When** the page loads
 - **Then** they see the 2023 collection directly
@@ -186,18 +186,18 @@ Implement native year navigation within the application, allowing users to seaml
 
 #### US-7: Navigate Year with Keyboard
 **As a** Personal User with accessibility needs
-**I want to** navigate the year selector using keyboard
+**I want to** navigate between year pages using keyboard
 **So that** I can use the application without a mouse
 
 **Acceptance Criteria:**
-- **Given** I focus on the year selector using Tab key
+- **Given** I focus on a year navigation link using Tab key
 - **When** I press Enter or Space
-- **Then** the year dropdown opens
-- **Given** the dropdown is open
-- **When** I use arrow keys
-- **Then** I can navigate between year options
-- **When** I press Enter on a year
-- **Then** that year is selected and the page updates
+- **Then** I navigate to that year's page
+- **Given** I am on any year page
+- **When** I use Tab to move through year navigation links
+- **Then** I can access all available year links
+- **When** I press Enter on a year link
+- **Then** I navigate to that year's page
 
 **Priority:** Should
 **Related Requirements:** NFR-3, NFR-4
@@ -210,36 +210,36 @@ Implement native year navigation within the application, allowing users to seaml
 
 ```
 1. User lands on gallery page
-   └── Default: Current year displayed
-   └── Or: Specific year from URL parameter (?year=2023)
+   └── Default: Current year's page displayed
+   └── Or: Specific year's page from URL path (e.g., /2023)
 
 2. User views cover gallery
    └── Four category sections visible (Books, Screen, Music, Games)
    └── Each section shows grid of covers
+   └── Vertical scrolling available for large collections
    └── Hover/tap reveals item titles
 
 3. User wants to view different year
-   └── Clicks year selector in header
-   └── Dropdown shows available years
-   └── Selects desired year
+   └── Clicks year navigation link in header
+   └── Navigates to that year's dedicated page
 
 4. Page transitions to new year
-   └── URL updates with year parameter
-   └── Grid repopulates with new year's data
-   └── Smooth transition animation (if motion allowed)
+   └── URL changes to new year path (e.g., /2023)
+   └── New page loads with that year's data
+   └── Smooth page transition animation (if motion allowed)
 
 5. User shares or bookmarks
-   └── Copies URL containing year
-   └── Link can be shared/reopened to same view
+   └── Copies URL (year page path)
+   └── Link can be shared/reopened to same year's page
 ```
 
 ### Interface Requirements
 
-#### Year Selector Component
+#### Year Navigation Component
 - Position: Header area, prominently placed near title
-- Style: Dropdown or segmented control matching existing design language
-- Content: Year range from earliest record to current year
-- Visual indicator: Clearly shows currently selected year
+- Style: Navigation links or buttons matching existing design language (e.g., "← 2023 | 2024 →" or year list)
+- Content: Links to available years from earliest record to current year
+- Visual indicator: Clearly highlights the current year's page
 
 #### Category Grid Sections
 - Layout: Full-width sections, one per category
@@ -259,7 +259,7 @@ Implement native year navigation within the application, allowing users to seaml
 
 ### Accessibility Considerations
 - Focus indicators visible on all interactive elements
-- Year selector operable via keyboard
+- Year navigation links operable via keyboard
 - Alt text on all cover images (using item's `display_title`)
 - Color contrast meets WCAG 2.1 AA standards
 - Skip links for keyboard navigation between sections
@@ -271,14 +271,15 @@ Implement native year navigation within the application, allowing users to seaml
 ### High-Level Technical Approach
 The implementation leverages the existing Vue 3 frontend and Flask backend architecture. The backend already supports year-based filtering via the `/api/complete/<category>/<year>` endpoints. The primary changes involve:
 
-1. **Frontend Year Selection**: Add a year selector component that manages year state and updates the displayed data
-2. **URL State Management**: Use Vue Router or URL query parameters to maintain year state
-3. **Grid Layout Transformation**: Replace the auto-scrolling carousel with a CSS Grid layout
-4. **Data Range Discovery**: Optionally add an API endpoint to discover available years with data
+1. **Page-Per-Year Architecture**: Each year has its own dedicated page/route (e.g., `/2023`, `/2024`)
+2. **Vue Router Path-Based Routing**: Use Vue Router with path parameters to handle year pages
+3. **Year Navigation Component**: Navigation links in header to switch between year pages
+4. **Grid Layout Transformation**: Replace the auto-scrolling carousel with a CSS Grid layout
+5. **Data Range Discovery**: Optionally add an API endpoint to discover available years with data
 
 ### Integration Points
 - **NEODB API**: Existing integration continues unchanged; backend proxies requests
-- **Vue Router**: May be activated for proper URL state management (already in dependencies)
+- **Vue Router**: Required for page-per-year routing with path parameters (already in dependencies)
 - **Vercel Deployment**: No changes required; same build/deploy process
 
 ### Key Technical Constraints
@@ -296,14 +297,14 @@ The implementation leverages the existing Vue 3 frontend and Flask backend archi
 ## Design Specification
 
 ### Recommended Approach
-Transform the existing auto-scrolling carousel into a responsive CSS Grid layout while adding a dropdown-based year selector to the header. Leverage existing Vue reactivity for state management and use URL query parameters for year persistence.
+Transform the existing auto-scrolling carousel into a responsive CSS Grid layout with a page-per-year architecture. Each year has its own dedicated route (e.g., `/2023`). Add year navigation links to the header for switching between year pages. Leverage Vue Router for path-based routing.
 
 ### Key Technical Decisions
 
-#### 1. Year State Management
+#### 1. Year Page Architecture
 - **Options Considered**: Vue Router with path parameters (`/2023`), URL query parameters (`?year=2023`), local state only
-- **Tradeoffs**: Path parameters require router configuration; query parameters are simpler but less "clean"; local state breaks shareability
-- **Recommendation**: URL query parameters (`?year=2023`) - simplest implementation that maintains shareability without Vue Router complexity
+- **Tradeoffs**: Path parameters require router configuration but provide cleaner URLs and true page separation; query parameters are simpler but feel like a single page; local state breaks shareability
+- **Recommendation**: Vue Router with path parameters (`/2023`) - each year is a distinct page with clean URLs, better for bookmarking and sharing
 
 #### 2. Year Range Discovery
 - **Options Considered**: Hardcode year range, new API endpoint to discover years with data, fetch current year and allow ±N years
@@ -317,20 +318,21 @@ Transform the existing auto-scrolling carousel into a responsive CSS Grid layout
 - **Recommendation**: CSS Grid - native browser support, excellent for uniform-sized items, responsive with `auto-fill`/`auto-fit`
 - **Note**: The carousel component and related animation code will be removed entirely, not kept as an alternative view
 
-#### 4. Transition Animation
+#### 4. Page Transition Animation
 - **Options Considered**: No animation, CSS fade transition, Vue transition component
 - **Tradeoffs**: No animation feels abrupt; CSS fade is simple; Vue transitions offer more control
-- **Recommendation**: Vue transition component with fade effect - leverages existing Vue patterns, respects reduced motion preference
+- **Recommendation**: Vue transition component with fade effect for page transitions - leverages existing Vue patterns, respects reduced motion preference
 
 ### High-Level Architecture
 
 ```mermaid
 flowchart TB
     subgraph Frontend["Frontend (Vue 3)"]
-        YS[Year Selector Component]
+        VR[Vue Router /:year]
+        YN[Year Navigation Component]
+        YP[Year Page Component]
         GG[Grid Gallery Component]
         CI[Cover Item Component]
-        URL[URL State ?year=YYYY]
     end
 
     subgraph Backend["Backend (Flask)"]
@@ -341,8 +343,9 @@ flowchart TB
         NEODB[NEODB API]
     end
 
-    URL -->|reads/writes| YS
-    YS -->|selected year| GG
+    VR -->|route params| YP
+    YN -->|navigation links| VR
+    YP -->|year context| GG
     GG -->|fetches data| API
     API -->|proxies request| NEODB
     NEODB -->|media items| API
@@ -360,9 +363,10 @@ flowchart TB
 - **Large Data Sets**: Years with 100+ items per category may cause performance issues. Mitigation: Implement virtual scrolling or "show more" pattern if item counts exceed threshold.
 
 ### Success Criteria
-- Year can be changed via selector without page reload
-- Grid displays all items without horizontal scroll
-- URL accurately reflects selected year
+- Each year has its own dedicated page accessible via URL path
+- Year navigation allows switching between year pages
+- Grid displays all items; vertical scrolling acceptable for large collections
+- URL accurately reflects selected year (e.g., `/2023`)
 - Existing visual design aesthetic is preserved
 
 ---
