@@ -42,7 +42,8 @@ describe('Grid CSS Media Queries (Test Case 6)', () => {
     });
 
     // Verify the grid container exists and has proper class
-    const gridContainer = wrapper.find('[data-testid="grid-container"]');
+    // The testid is dynamic based on category: items-grid-{category}
+    const gridContainer = wrapper.find('[data-testid="items-grid-book"]');
     expect(gridContainer.exists()).toBe(true);
     expect(gridContainer.classes()).toContain('grid-container');
   });
@@ -271,9 +272,10 @@ describe('Responsive grid structure', () => {
     expect(gridItems.length).toBeGreaterThan(0);
 
     // Each grid item should have proper structure for overlay positioning
+    // Note: CoverItem component uses .cover-image class (not .cover-img)
     gridItems.forEach(item => {
       expect(item.classes()).toContain('grid-item');
-      expect(item.find('.cover-img').exists()).toBe(true);
+      expect(item.find('.cover-image').exists()).toBe(true);
       expect(item.find('.item-title-overlay').exists()).toBe(true);
     });
   });
@@ -288,12 +290,13 @@ describe('Responsive grid structure', () => {
       }
     });
 
-    const images = wrapper.findAll('.cover-img');
+    // Note: CoverItem component uses .cover-image class (not .cover-img)
+    const images = wrapper.findAll('.cover-image');
     expect(images.length).toBe(mockItems.length);
 
-    // All images should have the cover-img class (CSS handles object-fit)
+    // All images should have the cover-image class (CSS handles object-fit)
     images.forEach(img => {
-      expect(img.classes()).toContain('cover-img');
+      expect(img.classes()).toContain('cover-image');
     });
   });
 
