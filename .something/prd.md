@@ -308,7 +308,7 @@ Transform the existing auto-scrolling carousel into a responsive CSS Grid layout
 #### 2. Year Range Discovery
 - **Options Considered**: Hardcode year range, new API endpoint to discover years with data, fetch current year and allow ±N years
 - **Tradeoffs**: Hardcoding is inflexible; new endpoint adds API surface; ±N years may show empty years
-- **Recommendation**: Allow selection of years from 2020 to current year (NEODB's typical usage period), gracefully handle empty years
+- **Recommendation**: Auto-detect available years from user's NEODB history via a discovery endpoint or by analyzing existing data responses. Only years with actual data should appear in the year selector, providing a cleaner UX and eliminating empty year selections
 
 #### 3. Grid Layout Implementation (Complete Carousel Replacement)
 - **Decision**: Completely remove the existing auto-scrolling carousel and replace with CSS Grid layout
