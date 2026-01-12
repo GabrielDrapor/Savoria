@@ -22,6 +22,164 @@ describe('CategorySection', () => {
     }
   ];
 
+  describe('Empty State Handling (REQ-8, US-5)', () => {
+    it('renders empty state message when items array is empty and not loading (Test Case 2)', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      // Should show empty state, not loading state
+      const emptyState = wrapper.find('[data-testid="empty-state"]');
+      expect(emptyState.exists()).toBe(true);
+
+      // Should display the empty message
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing recorded this year');
+
+      // Should not show loading state
+      const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
+      expect(loadingGrid.exists()).toBe(false);
+
+      // Should not show grid container
+      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      expect(gridContainer.exists()).toBe(false);
+    });
+
+    it('renders loading state when items is empty and isLoading is true', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: true
+        }
+      });
+
+      // Should show loading state
+      const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
+      expect(loadingGrid.exists()).toBe(true);
+
+      // Should not show empty state
+      const emptyState = wrapper.find('[data-testid="empty-state"]');
+      expect(emptyState.exists()).toBe(false);
+    });
+
+    it('empty state message has muted text styling (Test Case 4)', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+
+      // Verify the class exists (CSS styling applied via class)
+      expect(emptyMessage.classes()).toContain('empty-message');
+    });
+
+    it('empty state is centered within category section (Test Case 4)', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyState = wrapper.find('.empty-state');
+      expect(emptyState.exists()).toBe(true);
+
+      // Verify the class exists (CSS flex centering applied via class)
+      expect(emptyState.classes()).toContain('empty-state');
+    });
+
+    it('section is still visible when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      // Section should still exist
+      const section = wrapper.find('.category-section');
+      expect(section.exists()).toBe(true);
+
+      // Title should still be visible
+      const title = wrapper.find('.category-title');
+      expect(title.exists()).toBe(true);
+      expect(title.text()).toBe('I read');
+    });
+
+    it('renders grid with items when items provided (not empty state)', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: mockItems,
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      // Should show grid container with items
+      const gridContainer = wrapper.find('[data-testid="grid-container"]');
+      expect(gridContainer.exists()).toBe(true);
+
+      // Should not show empty state
+      const emptyState = wrapper.find('[data-testid="empty-state"]');
+      expect(emptyState.exists()).toBe(false);
+
+      // Should not show loading state
+      const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
+      expect(loadingGrid.exists()).toBe(false);
+    });
+
+    it('all four categories can show empty state', () => {
+      const categories = [
+        { category: 'book', title: 'I read' },
+        { category: 'screen', title: 'I watched' },
+        { category: 'music', title: 'I listened' },
+        { category: 'game', title: 'I played' }
+      ];
+
+      categories.forEach(({ category, title }) => {
+        const wrapper = mount(CategorySection, {
+          props: {
+            title,
+            items: [],
+            category,
+            isLoading: false
+          }
+        });
+
+        // Section should be visible
+        const section = wrapper.find('.category-section');
+        expect(section.exists()).toBe(true);
+        expect(section.attributes('data-category')).toBe(category);
+
+        // Empty state should be shown
+        const emptyState = wrapper.find('[data-testid="empty-state"]');
+        expect(emptyState.exists()).toBe(true);
+
+        // Title should be correct
+        expect(wrapper.find('.category-title').text()).toBe(title);
+      });
+    });
+  });
+
   describe('Component Rendering (Test Case 5)', () => {
     it('renders with category title header and grid container', () => {
       const wrapper = mount(CategorySection, {
@@ -67,12 +225,13 @@ describe('CategorySection', () => {
       });
     });
 
-    it('renders loading state when no items provided', () => {
+    it('renders loading state when no items provided and isLoading is true', () => {
       const wrapper = mount(CategorySection, {
         props: {
           title: 'I read',
           items: [],
-          category: 'book'
+          category: 'book',
+          isLoading: true
         }
       });
 
@@ -197,16 +356,31 @@ describe('CategorySection', () => {
       expect(wrapper.find('.category-title').text()).toBe('Test Title');
     });
 
-    it('handles empty items array gracefully', () => {
+    it('handles empty items array gracefully with loading state', () => {
       const wrapper = mount(CategorySection, {
         props: {
           title: 'I read',
           items: [],
-          category: 'book'
+          category: 'book',
+          isLoading: true
         }
       });
 
       expect(wrapper.find('[data-testid="loading-grid"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(false);
+    });
+
+    it('handles empty items array gracefully with empty state', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(true);
       expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(false);
     });
 

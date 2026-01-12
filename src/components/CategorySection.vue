@@ -13,11 +13,21 @@ export default {
     category: {
       type: String,
       required: true
+    },
+    isLoading: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
     hasItems() {
       return this.items && this.items.length > 0;
+    },
+    showEmptyState() {
+      return !this.isLoading && !this.hasItems;
+    },
+    showLoadingState() {
+      return this.isLoading && !this.hasItems;
     }
   }
 };
@@ -28,10 +38,15 @@ export default {
     <h2 class="category-title">{{ title }}</h2>
 
     <!-- Loading state -->
-    <div v-if="!hasItems" class="grid-container loading-grid" data-testid="loading-grid">
+    <div v-if="showLoadingState" class="grid-container loading-grid" data-testid="loading-grid">
       <div v-for="n in 8" :key="n" class="loading-item">
         <div class="loading-shimmer"></div>
       </div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="showEmptyState" class="empty-state" data-testid="empty-state">
+      <p class="empty-message">Nothing recorded this year</p>
     </div>
 
     <!-- Grid with items -->
@@ -135,6 +150,25 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  width: 100%;
+}
+
+.empty-message {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.1em;
+  font-weight: 300;
+  text-align: center;
+  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
+  margin: 0;
+  padding: 2rem;
 }
 
 /* Loading state */

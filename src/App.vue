@@ -21,6 +21,12 @@ export default {
         music: [],
         game: []
       },
+      categoryLoading: {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      },
       categories: {
         book: "I read",
         screen: "I watched",
@@ -54,6 +60,13 @@ export default {
       return resp_json.data;
     },
     async reloadItems() {
+      // Set all categories to loading state
+      this.categoryLoading = {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      };
       this.categoryItems = {
         book: [],
         screen: [],
@@ -63,7 +76,13 @@ export default {
       await this.getAllItems();
     },
     async getAllItems() {
-      // Reset items to trigger loading state
+      // Reset items and set loading state
+      this.categoryLoading = {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      };
       this.categoryItems = {
         book: [],
         screen: [],
@@ -75,10 +94,12 @@ export default {
       for (let type of types) {
         const items = await this.getCompletedItems(type);
         this.categoryItems[type] = items;
+        this.categoryLoading[type] = false;
       }
 
       const screenItems = await this.getScreenItems();
       this.categoryItems.screen = screenItems;
+      this.categoryLoading.screen = false;
     },
     onYearChange(year) {
       this.selectedYear = year;
@@ -113,6 +134,7 @@ export default {
       :title="categories[category]"
       :items="items"
       :category="category"
+      :is-loading="categoryLoading[category]"
     />
   </div>
 </template>
