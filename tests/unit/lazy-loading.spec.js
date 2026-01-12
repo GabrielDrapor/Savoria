@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import CategorySection from '../../src/components/CategorySection.vue';
+import CoverItem from '../../src/components/CoverItem.vue';
 
 describe('Image Lazy Loading (NFR-7)', () => {
   const mockItems = [
@@ -30,7 +31,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
         display_title: `Test Item ${i + 1}`,
         id: `${i + 1}`
       },
-      created_time: `2024-01-${String(i + 1).padStart(2, '0')}T10:30:00Z`
+      created_time: `2024-01-${String((i % 28) + 1).padStart(2, '0')}T10:30:00Z`
     }));
   };
 
@@ -44,7 +45,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images.length).toBe(2);
 
       // All images should have loading="lazy"
@@ -63,11 +64,11 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images.length).toBe(30);
 
       // Every single image should have loading="lazy"
-      images.forEach((img, index) => {
+      images.forEach((img) => {
         expect(img.attributes('loading')).toBe('lazy');
       });
     });
@@ -89,7 +90,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
           }
         });
 
-        const images = wrapper.findAll('.cover-img');
+        const images = wrapper.findAll('.cover-image');
         images.forEach(img => {
           expect(img.attributes('loading')).toBe('lazy');
         });
@@ -194,7 +195,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images[0].attributes('src')).toBe('https://example.com/cover1.jpg');
       expect(images[1].attributes('src')).toBe('https://example.com/cover2.jpg');
     });
@@ -208,7 +209,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images[0].attributes('alt')).toBe('Test Book 1');
       expect(images[1].attributes('alt')).toBe('Test Book 2');
     });
@@ -222,9 +223,9 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       images.forEach(img => {
-        expect(img.classes()).toContain('cover-img');
+        expect(img.classes()).toContain('cover-image');
       });
     });
   });
@@ -242,14 +243,14 @@ describe('Image Lazy Loading (NFR-7)', () => {
 
       // Initially should show loading
       expect(wrapper.find('[data-testid="loading-grid"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="items-grid-book"]').exists()).toBe(false);
 
       // Update props to simulate data loaded
       await wrapper.setProps({ items: mockItems, isLoading: false });
 
       // Should now show content
       expect(wrapper.find('[data-testid="loading-grid"]').exists()).toBe(false);
-      expect(wrapper.find('[data-testid="grid-container"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="items-grid-book"]').exists()).toBe(true);
     });
 
     it('shows empty state when loading finishes with no data', async () => {
@@ -285,7 +286,7 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images.length).toBe(30);
 
       // All images should have lazy loading enabled
@@ -304,12 +305,57 @@ describe('Image Lazy Loading (NFR-7)', () => {
         }
       });
 
-      const images = wrapper.findAll('.cover-img');
+      const images = wrapper.findAll('.cover-image');
       expect(images.length).toBe(50);
 
       // Verify lazy loading on all images
       const lazyLoadedImages = images.filter(img => img.attributes('loading') === 'lazy');
       expect(lazyLoadedImages.length).toBe(50);
+    });
+  });
+
+  describe('CoverItem component lazy loading', () => {
+    it('CoverItem has loading="lazy" on its image', () => {
+      const wrapper = mount(CoverItem, {
+        props: {
+          coverImageUrl: 'https://example.com/cover.jpg',
+          displayTitle: 'Test Cover'
+        }
+      });
+
+      const image = wrapper.find('[data-testid="cover-image"]');
+      expect(image.attributes('loading')).toBe('lazy');
+    });
+
+    it('CoverItem displays placeholder when image is missing', () => {
+      const wrapper = mount(CoverItem, {
+        props: {
+          coverImageUrl: '',
+          displayTitle: 'No Cover'
+        }
+      });
+
+      const placeholder = wrapper.find('[data-testid="cover-placeholder"]');
+      expect(placeholder.exists()).toBe(true);
+    });
+
+    it('CoverItem shows placeholder after image error', async () => {
+      const wrapper = mount(CoverItem, {
+        props: {
+          coverImageUrl: 'https://invalid-url.com/broken.jpg',
+          displayTitle: 'Broken Cover'
+        }
+      });
+
+      const image = wrapper.find('[data-testid="cover-image"]');
+      expect(image.exists()).toBe(true);
+
+      // Trigger error event
+      await image.trigger('error');
+
+      // After error, should show placeholder
+      const placeholder = wrapper.find('[data-testid="cover-placeholder"]');
+      expect(placeholder.exists()).toBe(true);
     });
   });
 });
