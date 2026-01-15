@@ -81,9 +81,6 @@ export default {
         @error="handleImageError"
       />
     </div>
-    <div class="item-title-overlay" data-testid="title-overlay">
-      <span class="item-title">{{ displayTitle }}</span>
-    </div>
   </div>
 </template>
 
@@ -138,22 +135,6 @@ export default {
   color: rgba(255, 255, 255, 0.3);
 }
 
-.item-title-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  padding: 2rem 0.5rem 0.5rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.cover-item:hover .item-title-overlay,
-.cover-item.touch-active .item-title-overlay {
-  opacity: 1;
-}
-
 .cover-item.touch-active {
   transform: scale(1.05);
   z-index: 10;
@@ -163,26 +144,9 @@ export default {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
 }
 
-.item-title {
-  color: #fff;
-  font-size: 0.85em;
-  font-weight: 400;
-  display: block;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
-}
-
 @media only screen and (max-width: 768px) {
   .cover-item:hover {
     transform: none;
-  }
-
-  .item-title-overlay {
-    opacity: 1;
-    background: linear-gradient(transparent 30%, rgba(0, 0, 0, 0.8));
   }
 }
 
