@@ -353,4 +353,125 @@ describe('YearNavigationHeader', () => {
       expect(wrapper.vm.canGoNext).toBe(true);
     });
   });
+
+  describe('Mobile Responsive Header (Scenario 21 Test Case 4)', () => {
+    it('header component has CSS styles for mobile viewport (768px breakpoint)', async () => {
+      const { readFileSync } = await import('fs');
+      const { resolve } = await import('path');
+
+      const componentFile = readFileSync(
+        resolve(__dirname, '../../src/components/YearNavigationHeader.vue'),
+        'utf-8'
+      );
+
+      // Verify mobile breakpoint media query exists
+      expect(componentFile).toContain('@media (max-width: 768px)');
+    });
+
+    it('mobile styles reduce page title font size', async () => {
+      const { readFileSync } = await import('fs');
+      const { resolve } = await import('path');
+
+      const componentFile = readFileSync(
+        resolve(__dirname, '../../src/components/YearNavigationHeader.vue'),
+        'utf-8'
+      );
+
+      // Verify font-size is adjusted in mobile breakpoint
+      // Desktop is 5.5em, mobile should be smaller (3.5em)
+      expect(componentFile).toContain('font-size: 3.5em');
+    });
+
+    it('mobile styles ensure navigation arrows have 44px minimum touch target', async () => {
+      const { readFileSync } = await import('fs');
+      const { resolve } = await import('path');
+
+      const componentFile = readFileSync(
+        resolve(__dirname, '../../src/components/YearNavigationHeader.vue'),
+        'utf-8'
+      );
+
+      // Verify minimum touch target size in mobile styles
+      expect(componentFile).toContain('min-width: 44px');
+      expect(componentFile).toContain('min-height: 44px');
+    });
+
+    it('integrated year navigation remains visible on mobile', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      // Core navigation elements should exist (CSS handles responsiveness)
+      const yearNavigation = wrapper.find('[data-testid="year-navigation-integrated"]');
+      expect(yearNavigation.exists()).toBe(true);
+
+      const prevButton = wrapper.find('[data-testid="prev-year-button"]');
+      const yearDisplay = wrapper.find('[data-testid="current-year-display"]');
+      const nextButton = wrapper.find('[data-testid="next-year-button"]');
+
+      expect(prevButton.exists()).toBe(true);
+      expect(yearDisplay.exists()).toBe(true);
+      expect(nextButton.exists()).toBe(true);
+    });
+  });
+
+  describe('Screen Reader Accessibility (Scenario 21 Test Case 5)', () => {
+    it('year display is readable by screen readers via text content', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      const yearDisplay = wrapper.find('[data-testid="current-year-display"]');
+      // Screen readers will read the text content directly
+      expect(yearDisplay.text()).toBe('2024');
+    });
+
+    it('navigation buttons have descriptive aria-labels for screen readers', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      const prevButton = wrapper.find('[data-testid="prev-year-button"]');
+      const nextButton = wrapper.find('[data-testid="next-year-button"]');
+
+      // Screen readers should clearly announce navigation options
+      expect(prevButton.attributes('aria-label')).toBe('Navigate to previous year 2023');
+      expect(nextButton.attributes('aria-label')).toBe('Navigate to next year 2025');
+    });
+
+    it('disabled buttons are announced as disabled to screen readers', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2020, startYear: 2020 }
+      });
+
+      const prevButton = wrapper.find('[data-testid="prev-year-button"]');
+
+      // aria-disabled should be 'true' for screen readers
+      expect(prevButton.attributes('aria-disabled')).toBe('true');
+    });
+
+    it('header element uses semantic h1 for main page heading', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      // The title should use h1 for proper document structure
+      const heading = wrapper.find('h1');
+      expect(heading.exists()).toBe(true);
+      expect(heading.classes()).toContain('page-title');
+    });
+
+    it('navigation uses button elements for proper interaction semantics', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      const prevButton = wrapper.find('[data-testid="prev-year-button"]');
+      const nextButton = wrapper.find('[data-testid="next-year-button"]');
+
+      // Buttons should be actual button elements for proper semantics
+      expect(prevButton.element.tagName.toLowerCase()).toBe('button');
+      expect(nextButton.element.tagName.toLowerCase()).toBe('button');
+    });
+  });
 });
