@@ -1,6 +1,7 @@
 <script>
 import YearSelector from './components/YearSelector.vue';
 import YearNavigationButtons from './components/YearNavigationButtons.vue';
+import YearNavigationHeader from './components/YearNavigationHeader.vue';
 import CategorySection from './components/CategorySection.vue';
 import {
   getYearFromUrlWithFallback,
@@ -17,6 +18,7 @@ export default {
   components: {
     YearSelector,
     YearNavigationButtons,
+    YearNavigationHeader,
     CategorySection
   },
   data() {
@@ -234,13 +236,10 @@ export default {
 </script>
 
 <template>
-  <div class="header-container">
-    <YearNavigationButtons
-      :selected-year="selectedYear"
-      @update:selected-year="onYearChange"
-    />
-  </div>
-  <h1 class="pageTitle">In {{ selectedYear }},</h1>
+  <YearNavigationHeader
+    :selected-year="selectedYear"
+    @update:selected-year="onYearChange"
+  />
 
   <Transition
     name="fade"
@@ -268,31 +267,6 @@ export default {
 </template>
 
 <style>
-.header-container {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  position: relative;
-  z-index: 10;
-}
-
-.pageTitle {
-  color: #f3f3f3;
-  font-size: 5.5em;
-  font-weight: 300;
-  margin: 2rem 0 2rem;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
-  letter-spacing: -0.03em;
-  background: linear-gradient(to right, #fff, #c4c4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  width: 100%;
-}
-
 .gallery-container {
   display: flex;
   flex-direction: column;
@@ -302,11 +276,6 @@ export default {
 }
 
 @media only screen and (max-width: 768px) {
-  .pageTitle {
-    font-size: 3.5em;
-    margin: 1.5rem 0 1.5rem;
-  }
-
   .gallery-container {
     gap: 30px;
   }
