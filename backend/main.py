@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from datetime import date
+from concurrent.futures import ThreadPoolExecutor
 import requests
 
 from flask import Flask, request
@@ -98,8 +99,23 @@ def get_completed_items_this_year(category, year=0):
 @app.route("/api/complete/screen")
 @app.route("/api/complete/screen/<year>")
 def get_completed_screen_items_this_year(year=0):
-    movies = get_completed_items_this_year("movie", year)["data"]
-    tvs = get_completed_items_this_year("tv", year)["data"]
+    """
+    Fetch movie and TV data in parallel to optimize response time.
+
+    Uses ThreadPoolExecutor to fetch both categories concurrently,
+    staying within Vercel's 10s function timeout limit.
+    """
+    def fetch_category(category):
+        """Helper function to fetch a single category's data."""
+        return get_completed_items_this_year(category, year)["data"]
+
+    # Fetch movie and TV data in parallel using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        movie_future = executor.submit(fetch_category, "movie")
+        tv_future = executor.submit(fetch_category, "tv")
+
+        movies = movie_future.result()
+        tvs = tv_future.result()
 
     return {"data": sorted(movies + tvs, key=lambda x: x["created_time"], reverse=True)}
 
