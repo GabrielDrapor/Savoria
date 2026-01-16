@@ -133,12 +133,12 @@ def get_shelf_items_from_neodb(category, page, shelf_type):
 
     for item in result["data"]:
         cover_image_url = item["item"]["cover_image_url"]
-        if cover_image_url.endswith('.jpg'):
-            cover_image_url += JPG_THUMBNAIL_SUFFIX
-        elif cover_image_url.endswith('.png'):
-            cover_image_url += PNG_THUMBNAIL_SUFFIX
-
-        item["item"]["cover_image_url"] = cover_image_url
+        if cover_image_url:
+            if cover_image_url.endswith('.jpg'):
+                cover_image_url += JPG_THUMBNAIL_SUFFIX
+            elif cover_image_url.endswith('.png'):
+                cover_image_url += PNG_THUMBNAIL_SUFFIX
+            item["item"]["cover_image_url"] = cover_image_url
 
     return result
 
