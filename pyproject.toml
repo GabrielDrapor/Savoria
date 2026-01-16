@@ -1,0 +1,16 @@
+[project]
+name = "savoria-backend"
+version = "0.1.0"
+description = "Savoria API backend"
+requires-python = ">=3.12"
+dependencies = [
+    "Flask==3.0.0",
+    "gunicorn==21.2.0",
+    "requests==2.31.0",
+    "flask_cors==4.0.0",
+    "blinker==1.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
