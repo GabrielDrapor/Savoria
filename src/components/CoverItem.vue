@@ -57,6 +57,7 @@ export default {
         class="cover-placeholder"
         data-testid="cover-placeholder"
         :aria-label="displayTitle"
+        title=""
       >
         <svg
           class="placeholder-icon"
@@ -77,6 +78,7 @@ export default {
         data-testid="cover-image"
         :src="coverImageUrl"
         :alt="displayTitle"
+        title=""
         loading="lazy"
         @error="handleImageError"
       />
