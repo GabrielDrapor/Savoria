@@ -1,12 +1,47 @@
 <script>
+import YearSelector from './components/YearSelector.vue';
+import YearNavigationButtons from './components/YearNavigationButtons.vue';
+import YearNavigationHeader from './components/YearNavigationHeader.vue';
+import CategorySection from './components/CategorySection.vue';
+import {
+  getYearFromUrlWithFallback,
+  updateUrlWithYear,
+  getCurrentYear
+} from './utils/yearUrl.js';
+import {
+  isYearCached,
+  getCachedYearData,
+  cacheYearData
+} from './utils/yearCache.js';
+
 export default {
+  components: {
+    YearSelector,
+    YearNavigationButtons,
+    YearNavigationHeader,
+    CategorySection
+  },
   data() {
     return {
+      selectedYear: getCurrentYear(),
+      isTransitioning: false,
       categoryItems: {
         book: [],
         screen: [],
         music: [],
         game: []
+      },
+      categoryLoading: {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      },
+      categoryError: {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
       },
       categories: {
         book: "I read",
@@ -14,415 +49,259 @@ export default {
         music: "I listened",
         game: "I played",
       },
-      scrollSpeeds: {
-        book: 1,
-        screen: 1,
-        music: 1,
-        game: 1
-      },
-      isReducedMotion: false
+      fetchTimeout: 10000 // 10 second timeout for API calls
     };
   },
   methods: {
-    getPrevYearUrl() {
-      return window.location.href.replace('savor', `savor${new Date().getFullYear() - 1}`);
+    initializeYearFromUrl() {
+      this.selectedYear = getYearFromUrlWithFallback(window.location.search, window.location.pathname);
+    },
+    handlePopState() {
+      this.selectedYear = getYearFromUrlWithFallback(window.location.search, window.location.pathname);
+      this.reloadItems();
+    },
+    async fetchWithTimeout(url, timeout) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
     },
     async getCompletedItems(type) {
-      const baseUrl = process.env.NODE_ENV === 'development' 
+      const baseUrl = process.env.NODE_ENV === 'development'
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/${type}`);
-      const resp_json = await req.json();
-      return resp_json.data;
+
+      try {
+        const req = await this.fetchWithTimeout(
+          baseUrl + `/api/complete/${type}/${this.selectedYear}`,
+          this.fetchTimeout
+        );
+        const resp_json = await req.json();
+        return { data: resp_json.data, error: false };
+      } catch (error) {
+        console.error(`Error fetching ${type}:`, error);
+        return { data: [], error: true };
+      }
     },
     async getScreenItems() {
-      const baseUrl = process.env.NODE_ENV === 'development' 
+      const baseUrl = process.env.NODE_ENV === 'development'
         ? "http://localhost:9527"
         : "";
-      const req = await fetch(baseUrl + `/api/complete/screen`);
-      const resp_json = await req.json();
-      return resp_json.data;
+
+      try {
+        const req = await this.fetchWithTimeout(
+          baseUrl + `/api/complete/screen/${this.selectedYear}`,
+          this.fetchTimeout
+        );
+        const resp_json = await req.json();
+        return { data: resp_json.data, error: false };
+      } catch (error) {
+        console.error('Error fetching screen:', error);
+        return { data: [], error: true };
+      }
+    },
+    async reloadItems() {
+      // Check if data for this year is already cached
+      if (isYearCached(this.selectedYear)) {
+        const cachedData = getCachedYearData(this.selectedYear);
+        this.categoryItems = {
+          book: [...cachedData.book],
+          screen: [...cachedData.screen],
+          music: [...cachedData.music],
+          game: [...cachedData.game]
+        };
+        this.categoryLoading = {
+          book: false,
+          screen: false,
+          music: false,
+          game: false
+        };
+        this.categoryError = {
+          book: false,
+          screen: false,
+          music: false,
+          game: false
+        };
+        return;
+      }
+
+      // Set all categories to loading state and reset errors
+      this.categoryLoading = {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      };
+      this.categoryError = {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
+      };
+      this.categoryItems = {
+        book: [],
+        screen: [],
+        music: [],
+        game: []
+      };
+      await this.getAllItems();
     },
     async getAllItems() {
+      // Reset items and set loading state
+      this.categoryLoading = {
+        book: true,
+        screen: true,
+        music: true,
+        game: true
+      };
+      this.categoryError = {
+        book: false,
+        screen: false,
+        music: false,
+        game: false
+      };
+      this.categoryItems = {
+        book: [],
+        screen: [],
+        music: [],
+        game: []
+      };
+
       const types = ['book', 'music', 'game'];
       for (let type of types) {
-        const items = await this.getCompletedItems(type);
-        this.categoryItems[type] = items;
+        const result = await this.getCompletedItems(type);
+        this.categoryItems[type] = result.data;
+        this.categoryError[type] = result.error;
+        this.categoryLoading[type] = false;
       }
-      
-      const screenItems = await this.getScreenItems();
-      this.categoryItems.screen = screenItems;
 
-      this.$nextTick(() => {
-        this.checkReducedMotion();
-        const tracks = document.querySelectorAll('.itemsTrack');
-        tracks.forEach(track => {
-          track.addEventListener('scroll', this.handleScrollPosition, { passive: true });
-        });
-      });
-    },
-    handleScroll(category, event) {
-      if (this.isReducedMotion) return;
-      
-      const speed = Math.abs(event.deltaX) / 50;
-      this.scrollSpeeds[category] = Math.min(Math.max(1, speed), 3);
-      
-      if (this.scrollTimeout) {
-        clearTimeout(this.scrollTimeout);
-      }
-      
-      this.scrollTimeout = setTimeout(() => {
-        this.scrollSpeeds[category] = 1;
-      }, 1000);
-    },
-    handleScrollPosition(event) {
-      const track = event.target;
-      const scrollWidth = track.scrollWidth / 3;
-      
-      if (track.scrollLeft >= scrollWidth * 2) {
-        track.scrollLeft = scrollWidth;
-      } else if (track.scrollLeft <= 0) {
-        track.scrollLeft = scrollWidth;
+      const screenResult = await this.getScreenItems();
+      this.categoryItems.screen = screenResult.data;
+      this.categoryError.screen = screenResult.error;
+      this.categoryLoading.screen = false;
+
+      // Only cache data if there were no errors
+      const hasAnyError = Object.values(this.categoryError).some(e => e);
+      if (!hasAnyError) {
+        cacheYearData(this.selectedYear, this.categoryItems);
       }
     },
-    checkReducedMotion() {
-      this.isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      
-      this.isReducedMotion = this.isReducedMotion || window.innerWidth < 768;
+    async retryCategory(category) {
+      // Set loading state for this category
+      this.categoryLoading[category] = true;
+      this.categoryError[category] = false;
+
+      let result;
+      if (category === 'screen') {
+        result = await this.getScreenItems();
+      } else {
+        result = await this.getCompletedItems(category);
+      }
+
+      this.categoryItems[category] = result.data;
+      this.categoryError[category] = result.error;
+      this.categoryLoading[category] = false;
+    },
+    onYearChange(year) {
+      this.selectedYear = year;
+      updateUrlWithYear(year);
+      this.isTransitioning = true;
+      this.reloadItems();
+    },
+    onTransitionEnd() {
+      this.isTransitioning = false;
     }
   },
   mounted() {
+    this.initializeYearFromUrl();
     this.getAllItems();
+    window.addEventListener('popstate', this.handlePopState);
   },
   beforeUnmount() {
-    const tracks = document.querySelectorAll('.itemsTrack');
-    tracks.forEach(track => {
-      track.removeEventListener('scroll', this.handleScrollPosition);
-    });
+    window.removeEventListener('popstate', this.handlePopState);
   }
 };
 </script>
 
 <template>
-  <a :href=getPrevYearUrl() class="backButton" target="_blank" rel="noopener noreferrer">← {{ new Date().getFullYear() - 1 }}</a>
-  <h1 class="pageTitle">In {{ new Date().getFullYear() }},</h1>
+  <YearNavigationHeader
+    :selected-year="selectedYear"
+    @update:selected-year="onYearChange"
+  />
 
-  <div class="rowsContainer">
-    <div 
-      v-for="(items, category) in categoryItems" 
-      :key="category"
-      class="categoryRow"
+  <Transition
+    name="fade"
+    mode="out-in"
+    @after-enter="onTransitionEnd"
+    @after-leave="onTransitionEnd"
+  >
+    <div
+      class="gallery-container"
+      data-testid="gallery-container"
+      :key="selectedYear"
     >
-      <h2 class="categoryTitle">{{ categories[category] }}</h2>
-      <div 
-        class="itemsTrack" 
-        @wheel="handleScroll(category, $event)"
-        :style="{ '--scroll-speed': scrollSpeeds[category] }"
-      >
-        <!-- Show loading placeholders when no items -->
-        <div v-if="!items.length" class="loadingRow">
-          <div v-for="n in 8" :key="n" class="loadingItem">
-            <div class="loadingShimmer"></div>
-          </div>
-        </div>
-        <!-- Show actual items when loaded -->
-        <div v-else class="itemsInner">
-          <template v-for="n in (isReducedMotion ? 2 : 6)" :key="n">
-            <div 
-              v-for="(item, index) in items" 
-              :key="category + n + index" 
-              class="floatingItem"
-            >
-              <img 
-                class="coverImg" 
-                :src="item.item.cover_image_url" 
-                :alt="item.item.display_title"
-                loading="lazy"
-              />
-            </div>
-          </template>
-        </div>
-      </div>
+      <CategorySection
+        v-for="(items, category) in categoryItems"
+        :key="category"
+        :title="categories[category]"
+        :items="items"
+        :category="category"
+        :is-loading="categoryLoading[category]"
+        :is-error="categoryError[category]"
+        @retry="retryCategory"
+      />
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style>
-.backButton {
-  position: relative;
-  display: inline-block;
-  margin: 20px 0 0 20px;
-  z-index: 10;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  color: #f3f3f3;
-  text-decoration: none;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
-  font-size: 1em;
-  transition: background 0.2s ease;
-  z-index: 10;
-}
-
-.backButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.pageTitle {
-  color: #f3f3f3;
-  font-size: 5.5em;
-  font-weight: 300;
-  margin: 2rem 0 2rem;
-  font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
-  letter-spacing: -0.03em;
-  background: linear-gradient(to right, #fff, #c4c4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  width: 100%;
-}
-
-.rowsContainer {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 20px 0;
+.gallery-container {
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  width: 100vw;
-  margin-left: calc((100vw - 100%) / -2);
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-.categoryRow {
-  position: relative;
-  padding: 2rem 0;
-}
-
-.categoryTitle {
-  color: #f3f3f3;
-  font-size: 2.5em;
-  font-weight: 300;
-  margin-bottom: 1.5rem;
-  opacity: 0.8;
-  text-align: center;
+  gap: 40px;
+  padding: 20px 0;
   width: 100%;
-  position: relative;
-  padding: 0;
-}
-
-.itemsTrack {
-  overflow-x: auto;
-  overflow-y: visible;
-  margin: 0 -20px;
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 5%,
-    black 95%,
-    transparent
-  );
-  cursor: grab;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scroll-behavior: auto;
-  padding: 2rem 0;
-  margin-top: -2rem;
-  margin-bottom: -2rem;
-}
-
-.itemsTrack::-webkit-scrollbar {
-  display: none;
-}
-
-.itemsTrack:active {
-  cursor: grabbing;
-}
-
-.itemsInner {
-  display: flex;
-  gap: 15px;
-  padding: 0 20px;
-  min-width: max-content;
-  will-change: transform;
-  animation: autoScroll 120s linear infinite;
-  animation-play-state: running;
-  animation-duration: calc(120s / var(--scroll-speed, 1));
-}
-
-@keyframes autoScroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-16.666%));
-  }
-}
-
-.itemsTrack:hover .itemsInner {
-  animation-play-state: paused;
-}
-
-.itemsTrack:active .itemsInner {
-  animation-play-state: paused;
-}
-
-.floatingItem {
-  width: 150px;
-  flex-shrink: 0;
-  aspect-ratio: 3/4;
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-  transform-origin: center center;
-  padding: 1rem 0;
-  margin: -1rem 0;
-}
-
-.floatingItem:hover {
-  transform: scale(1.2);
-  z-index: 10;
-}
-
-.coverImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.floatingItem:hover .coverImg {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-}
-
-.loading {
-  width: 45px;
-  margin: 2rem auto;
-  aspect-ratio: 1;
-  --c: no-repeat linear-gradient(#fff 0 0);
-  background: 
-    var(--c) 0%   50%,
-    var(--c) 50%  50%,
-    var(--c) 100% 50%;
-  background-size: 20% 100%;
-  animation: l1 1s infinite linear;
-}
-
-@keyframes l1 {
-  0%  {background-size: 20% 100%,20% 100%,20% 100%}
-  33% {background-size: 20% 10% ,20% 100%,20% 100%}
-  50% {background-size: 20% 100%,20% 10% ,20% 100%}
-  66% {background-size: 20% 100%,20% 100%,20% 10% }
-  100%{background-size: 20% 100%,20% 100%,20% 100%}
-}
-
-.rowsContainer::-webkit-scrollbar {
-  height: 8px;
-}
-
-.rowsContainer::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.rowsContainer::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  border: 2px solid transparent;
-}
-
-.rowsContainer::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.loadingRow {
-  display: flex;
-  gap: 15px;
-  padding: 0 20px;
-  min-width: max-content;
-}
-
-.loadingItem {
-  width: 120px;
-  aspect-ratio: 3/4;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.loadingShimmer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
 }
 
 @media only screen and (max-width: 768px) {
-  .pageTitle {
-    font-size: 3.5em;
-    margin: 1.5rem 0 1.5rem;
-  }
-  
-  .rowsContainer {
-    gap: 25px;
-  }
-
-  .categoryTitle {
-    font-size: 2em;
-    margin-bottom: 1.2rem;
-  }
-  
-  .floatingItem {
-    width: 120px;
-  }
-
-  .itemsInner {
-    gap: 12px;
-  }
-
-  .loadingItem {
-    width: 120px;
-    aspect-ratio: 3/4;
+  .gallery-container {
+    gap: 30px;
   }
 }
 
-@media (prefers-reduced-motion: reduce), (max-width: 768px) {
-  .itemsInner {
-    animation: none;
-  }
-  
-  .floatingItem:hover {
-    transform: none;
-  }
-  
-  .coverImg {
-    transform: none;
+/* Vue transition classes for fade effect (REQ-7) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Respect prefers-reduced-motion (NFR-6) */
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
     transition: none;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 1;
   }
 }
 </style>

@@ -1,4 +1,16 @@
 .space
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+
 # Logs
 logs
 *.log
@@ -17,6 +29,8 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
+/test-results/
+/playwright-report/
 
 # Editor directories and files
 .vscode/*
@@ -27,3 +41,7 @@ coverage
 *.sln
 *.sw?
 .vercel
+.something/
+playwright-report/
+test-results/
+.system-artifacts
