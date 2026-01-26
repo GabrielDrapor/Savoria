@@ -526,6 +526,97 @@ describe('CategorySection', () => {
     });
   });
 
+  describe('Empty State Text Capitalization Verification (Scenario 3)', () => {
+    it('empty state message uses exact title case "Nothing Yet" with capital N and capital Y', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+
+      // Verify exact capitalization - must be "Nothing Yet" not any other variant
+      const actualText = emptyMessage.text();
+      expect(actualText).toBe('Nothing Yet');
+
+      // Explicitly verify it's NOT any incorrect capitalization
+      expect(actualText).not.toBe('nothing yet'); // all lowercase
+      expect(actualText).not.toBe('NOTHING YET'); // all uppercase
+      expect(actualText).not.toBe('Nothing yet'); // only first word capitalized
+      expect(actualText).not.toBe('nothing Yet'); // only second word capitalized
+    });
+
+    it('empty state message starts with capital "N" for "Nothing"', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I watched',
+          items: [],
+          category: 'screen',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      const text = emptyMessage.text();
+
+      // First character must be capital N
+      expect(text.charAt(0)).toBe('N');
+      expect(text.startsWith('Nothing')).toBe(true);
+    });
+
+    it('empty state message uses capital "Y" for "Yet"', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I listened',
+          items: [],
+          category: 'music',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      const text = emptyMessage.text();
+
+      // "Yet" must start with capital Y
+      expect(text).toContain('Yet');
+      expect(text).not.toContain('yet');
+      expect(text.endsWith('Yet')).toBe(true);
+    });
+
+    it('all four categories display consistently capitalized "Nothing Yet" message', () => {
+      const categories = [
+        { category: 'book', title: 'I read' },
+        { category: 'screen', title: 'I watched' },
+        { category: 'music', title: 'I listened' },
+        { category: 'game', title: 'I played' }
+      ];
+
+      const expectedText = 'Nothing Yet';
+
+      categories.forEach(({ category, title }) => {
+        const wrapper = mount(CategorySection, {
+          props: {
+            title,
+            items: [],
+            category,
+            isLoading: false
+          }
+        });
+
+        const emptyMessage = wrapper.find('.empty-message');
+        expect(emptyMessage.exists()).toBe(true);
+
+        // Each category must show exactly the same capitalized text
+        expect(emptyMessage.text()).toBe(expectedText);
+      });
+    });
+  });
+
   describe('Props Validation', () => {
     it('accepts required title prop', () => {
       const wrapper = mount(CategorySection, {
