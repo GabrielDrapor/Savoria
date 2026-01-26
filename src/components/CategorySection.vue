@@ -101,7 +101,7 @@ export default {
 
     <!-- Empty state -->
     <div v-else-if="showEmptyState" class="empty-state" data-testid="empty-state">
-      <p class="empty-message">Nothing recorded this year</p>
+      <p class="empty-message">Nothing Yet</p>
     </div>
 
     <!-- Grid with items -->

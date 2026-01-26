@@ -312,7 +312,7 @@ describe('Accessibility ARIA Labels (NFR-4)', () => {
 
       const emptyMessage = wrapper.find('.empty-message');
       expect(emptyMessage.exists()).toBe(true);
-      expect(emptyMessage.text()).toBe('Nothing recorded this year');
+      expect(emptyMessage.text()).toBe('Nothing Yet');
     });
   });
 

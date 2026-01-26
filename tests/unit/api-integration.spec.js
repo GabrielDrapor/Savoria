@@ -359,7 +359,7 @@ describe('API Integration - Cover Image and Title Rendering', () => {
       expect(emptyState.exists()).toBe(true);
 
       const emptyMessage = wrapper.find('.empty-message');
-      expect(emptyMessage.text()).toBe('Nothing recorded this year');
+      expect(emptyMessage.text()).toBe('Nothing Yet');
     });
 
     it('should display loading state while API is fetching', () => {

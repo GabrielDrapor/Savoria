@@ -40,7 +40,7 @@ describe('CategorySection', () => {
       // Should display the empty message
       const emptyMessage = wrapper.find('.empty-message');
       expect(emptyMessage.exists()).toBe(true);
-      expect(emptyMessage.text()).toBe('Nothing recorded this year');
+      expect(emptyMessage.text()).toBe('Nothing Yet');
 
       // Should not show loading state
       const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
@@ -177,6 +177,66 @@ describe('CategorySection', () => {
         // Title should be correct
         expect(wrapper.find('.category-title').text()).toBe(title);
       });
+    });
+
+    it('displays "Nothing Yet" for book category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for screen category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I watched',
+          items: [],
+          category: 'screen',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for music category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I listened',
+          items: [],
+          category: 'music',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for game category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I played',
+          items: [],
+          category: 'game',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
     });
   });
 
@@ -463,6 +523,97 @@ describe('CategorySection', () => {
 
       const titleOverlay = wrapper.find('[data-testid="title-overlay"]');
       expect(titleOverlay.exists()).toBe(true);
+    });
+  });
+
+  describe('Empty State Text Capitalization Verification (Scenario 3)', () => {
+    it('empty state message uses exact title case "Nothing Yet" with capital N and capital Y', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+
+      // Verify exact capitalization - must be "Nothing Yet" not any other variant
+      const actualText = emptyMessage.text();
+      expect(actualText).toBe('Nothing Yet');
+
+      // Explicitly verify it's NOT any incorrect capitalization
+      expect(actualText).not.toBe('nothing yet'); // all lowercase
+      expect(actualText).not.toBe('NOTHING YET'); // all uppercase
+      expect(actualText).not.toBe('Nothing yet'); // only first word capitalized
+      expect(actualText).not.toBe('nothing Yet'); // only second word capitalized
+    });
+
+    it('empty state message starts with capital "N" for "Nothing"', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I watched',
+          items: [],
+          category: 'screen',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      const text = emptyMessage.text();
+
+      // First character must be capital N
+      expect(text.charAt(0)).toBe('N');
+      expect(text.startsWith('Nothing')).toBe(true);
+    });
+
+    it('empty state message uses capital "Y" for "Yet"', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I listened',
+          items: [],
+          category: 'music',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      const text = emptyMessage.text();
+
+      // "Yet" must start with capital Y
+      expect(text).toContain('Yet');
+      expect(text).not.toContain('yet');
+      expect(text.endsWith('Yet')).toBe(true);
+    });
+
+    it('all four categories display consistently capitalized "Nothing Yet" message', () => {
+      const categories = [
+        { category: 'book', title: 'I read' },
+        { category: 'screen', title: 'I watched' },
+        { category: 'music', title: 'I listened' },
+        { category: 'game', title: 'I played' }
+      ];
+
+      const expectedText = 'Nothing Yet';
+
+      categories.forEach(({ category, title }) => {
+        const wrapper = mount(CategorySection, {
+          props: {
+            title,
+            items: [],
+            category,
+            isLoading: false
+          }
+        });
+
+        const emptyMessage = wrapper.find('.empty-message');
+        expect(emptyMessage.exists()).toBe(true);
+
+        // Each category must show exactly the same capitalized text
+        expect(emptyMessage.text()).toBe(expectedText);
+      });
     });
   });
 

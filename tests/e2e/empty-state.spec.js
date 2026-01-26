@@ -75,7 +75,7 @@ test.describe('Empty State Handling (REQ-8, US-5)', () => {
 
     // Verify the empty message text
     const emptyMessage = booksSection.locator('.empty-message');
-    await expect(emptyMessage).toHaveText('Nothing recorded this year');
+    await expect(emptyMessage).toHaveText('Nothing Yet');
 
     // Verify the section is still visible (not hidden)
     const categoryTitle = booksSection.locator('.category-title');
@@ -140,7 +140,7 @@ test.describe('Empty State Handling (REQ-8, US-5)', () => {
 
       // Verify empty message
       const emptyMessage = section.locator('.empty-message');
-      await expect(emptyMessage).toHaveText('Nothing recorded this year');
+      await expect(emptyMessage).toHaveText('Nothing Yet');
     }
   });
 
@@ -253,7 +253,55 @@ test.describe('Empty State Handling (REQ-8, US-5)', () => {
     const musicEmptyState = musicSection.locator('[data-testid="empty-state"]');
     await expect(musicEmptyState).toBeVisible();
     const musicEmptyMessage = musicSection.locator('.empty-message');
-    await expect(musicEmptyMessage).toHaveText('Nothing recorded this year');
+    await expect(musicEmptyMessage).toHaveText('Nothing Yet');
+  });
+
+  test('Scenario 3 - Capitalization Verification: Empty message displays exactly "Nothing Yet" with title case', async ({ page }) => {
+    // Mock all API responses as empty
+    await page.route('**/api/complete/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(emptyData)
+      });
+    });
+
+    // Navigate to the gallery page
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // Wait for the books section to appear
+    const booksSection = page.locator('[data-category="book"]');
+    await expect(booksSection).toBeVisible({ timeout: 10000 });
+
+    // Get the empty message text
+    const emptyMessage = booksSection.locator('.empty-message');
+    await expect(emptyMessage).toBeVisible();
+
+    // Get actual text content
+    const actualText = await emptyMessage.textContent();
+
+    // Verify EXACT capitalization - must be "Nothing Yet" (title case)
+    expect(actualText).toBe('Nothing Yet');
+
+    // Verify it's NOT incorrect capitalization variants
+    expect(actualText).not.toBe('nothing yet'); // all lowercase
+    expect(actualText).not.toBe('NOTHING YET'); // all uppercase
+    expect(actualText).not.toBe('Nothing yet'); // only first word capitalized
+    expect(actualText).not.toBe('nothing Yet'); // only second word capitalized
+
+    // Verify consistent capitalization across all categories
+    const categories = ['book', 'screen', 'music', 'game'];
+    for (const category of categories) {
+      const section = page.locator(`[data-category="${category}"]`);
+      await expect(section).toBeVisible({ timeout: 10000 });
+
+      const message = section.locator('.empty-message');
+      await expect(message).toBeVisible();
+
+      const text = await message.textContent();
+      expect(text).toBe('Nothing Yet');
+    }
   });
 
   test('Empty state does not show loading shimmer', async ({ page }) => {
