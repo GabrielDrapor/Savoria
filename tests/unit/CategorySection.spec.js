@@ -40,7 +40,7 @@ describe('CategorySection', () => {
       // Should display the empty message
       const emptyMessage = wrapper.find('.empty-message');
       expect(emptyMessage.exists()).toBe(true);
-      expect(emptyMessage.text()).toBe('Nothing recorded this year');
+      expect(emptyMessage.text()).toBe('Nothing Yet');
 
       // Should not show loading state
       const loadingGrid = wrapper.find('[data-testid="loading-grid"]');
@@ -177,6 +177,66 @@ describe('CategorySection', () => {
         // Title should be correct
         expect(wrapper.find('.category-title').text()).toBe(title);
       });
+    });
+
+    it('displays "Nothing Yet" for book category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I read',
+          items: [],
+          category: 'book',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for screen category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I watched',
+          items: [],
+          category: 'screen',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for music category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I listened',
+          items: [],
+          category: 'music',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
+    });
+
+    it('displays "Nothing Yet" for game category when empty', () => {
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'I played',
+          items: [],
+          category: 'game',
+          isLoading: false
+        }
+      });
+
+      const emptyMessage = wrapper.find('.empty-message');
+      expect(emptyMessage.exists()).toBe(true);
+      expect(emptyMessage.text()).toBe('Nothing Yet');
     });
   });
 
