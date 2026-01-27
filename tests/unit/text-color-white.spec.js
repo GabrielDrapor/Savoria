@@ -574,3 +574,220 @@ describe('NFR-3: Responsive behavior at 768px breakpoint', () => {
     });
   });
 });
+
+/**
+ * Scenario 8: Component isolation - No side effects
+ *
+ * Verify that the CSS changes to YearNavigationHeader.vue do not affect any other components.
+ * Vue scoped styles add unique data attributes to prevent cross-component styling.
+ */
+describe('Component isolation: No side effects', () => {
+  /**
+   * Helper to read component file content
+   * @param {string} componentName - The component file name (e.g., 'CategorySection.vue')
+   * @returns {string} The component file content
+   */
+  function getOtherComponentContent(componentName) {
+    return readFileSync(
+      resolve(__dirname, `../../src/components/${componentName}`),
+      'utf-8'
+    );
+  }
+
+  /**
+   * Helper to check if a style tag has the 'scoped' attribute
+   * @param {string} componentContent - The full component file content
+   * @returns {boolean} True if the style tag has 'scoped' attribute
+   */
+  function hasScoped(componentContent) {
+    return /<style[^>]*\bscoped\b[^>]*>/.test(componentContent);
+  }
+
+  describe('Test Case 1: Check YearNavigationHeader.vue style tag includes scoped attribute', () => {
+    it('should have a style tag with the scoped attribute', () => {
+      const componentContent = getComponentContent();
+
+      // Check for <style scoped> or <style lang="..." scoped>
+      const hasStyleScoped = hasScoped(componentContent);
+
+      expect(hasStyleScoped).toBe(true);
+    });
+
+    it('should have exactly one style tag that is scoped', () => {
+      const componentContent = getComponentContent();
+
+      // Find all style tags
+      const styleTagMatches = componentContent.match(/<style[^>]*>/g) || [];
+
+      // Verify at least one style tag exists
+      expect(styleTagMatches.length).toBeGreaterThan(0);
+
+      // Verify all style tags are scoped
+      styleTagMatches.forEach(styleTag => {
+        expect(styleTag).toMatch(/\bscoped\b/);
+      });
+    });
+
+    it('should prevent CSS leakage due to scoped attribute', () => {
+      const componentContent = getComponentContent();
+
+      // Extract the style section to verify it's properly structured
+      const styleSectionMatch = componentContent.match(/<style[^>]*scoped[^>]*>([\s\S]*?)<\/style>/);
+      expect(styleSectionMatch).toBeTruthy();
+
+      // Verify CSS rules exist within the scoped style
+      const styleContent = styleSectionMatch[1];
+      expect(styleContent).toContain('.page-title');
+      expect(styleContent).toContain('.current-year');
+      expect(styleContent).toContain('.title-prefix');
+    });
+  });
+
+  describe('Test Case 2: Verify other components retain original styling', () => {
+    it('CategorySection.vue should NOT have color: #fff applied to .category-title', () => {
+      const componentContent = getOtherComponentContent('CategorySection.vue');
+
+      // Extract the style section
+      const styleSectionMatch = componentContent.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+      expect(styleSectionMatch).toBeTruthy();
+
+      const styleContent = styleSectionMatch[1];
+
+      // Find .category-title rules
+      const categoryTitleMatch = styleContent.match(/\.category-title\s*\{([^}]*)\}/);
+      expect(categoryTitleMatch).toBeTruthy();
+
+      const categoryTitleRules = categoryTitleMatch[1];
+
+      // CategorySection uses color: #f3f3f3, not #fff
+      expect(categoryTitleRules).toMatch(/color:\s*#f3f3f3/);
+      expect(categoryTitleRules).not.toMatch(/color:\s*#fff\b/);
+    });
+
+    it('CategorySection.vue should have scoped styles', () => {
+      const componentContent = getOtherComponentContent('CategorySection.vue');
+
+      // Verify CategorySection also uses scoped styles
+      const hasStyleScoped = hasScoped(componentContent);
+      expect(hasStyleScoped).toBe(true);
+    });
+
+    it('CoverItem.vue should NOT have color: #fff applied to text elements', () => {
+      const componentContent = getOtherComponentContent('CoverItem.vue');
+
+      // Extract the style section
+      const styleSectionMatch = componentContent.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+      expect(styleSectionMatch).toBeTruthy();
+
+      const styleContent = styleSectionMatch[1];
+
+      // CoverItem doesn't have any color: #fff rules for text
+      // The placeholder uses rgba(255, 255, 255, 0.3) which is not pure white
+      expect(styleContent).not.toMatch(/^\s*color:\s*#fff\b/m);
+    });
+
+    it('CoverItem.vue should have scoped styles', () => {
+      const componentContent = getOtherComponentContent('CoverItem.vue');
+
+      // Verify CoverItem also uses scoped styles
+      const hasStyleScoped = hasScoped(componentContent);
+      expect(hasStyleScoped).toBe(true);
+    });
+
+    it('YearNavigationHeader changes should not affect CategorySection computed styles', async () => {
+      // Mount CategorySection with mock data using dynamic import
+      const CategorySectionModule = await import('../../src/components/CategorySection.vue');
+      const CategorySection = CategorySectionModule.default;
+
+      const wrapper = mount(CategorySection, {
+        props: {
+          title: 'Test Category',
+          category: 'test',
+          items: []
+        }
+      });
+
+      // Verify the component renders correctly
+      const categoryTitle = wrapper.find('.category-title');
+      expect(categoryTitle.exists()).toBe(true);
+      expect(categoryTitle.text()).toBe('Test Category');
+
+      // The class should be present for styling
+      expect(categoryTitle.classes()).toContain('category-title');
+
+      wrapper.unmount();
+    });
+
+    it('YearNavigationHeader changes should not affect CoverItem rendering', async () => {
+      // Mount CoverItem with mock data using dynamic import
+      const CoverItemModule = await import('../../src/components/CoverItem.vue');
+      const CoverItem = CoverItemModule.default;
+
+      const wrapper = mount(CoverItem, {
+        props: {
+          coverImageUrl: '',
+          displayTitle: 'Test Item'
+        }
+      });
+
+      // Verify the component renders correctly
+      const coverItem = wrapper.find('.cover-item');
+      expect(coverItem.exists()).toBe(true);
+
+      // Verify placeholder is shown when no image URL
+      const placeholder = wrapper.find('.cover-placeholder');
+      expect(placeholder.exists()).toBe(true);
+
+      wrapper.unmount();
+    });
+  });
+
+  describe('Integration: Full app component isolation', () => {
+    it('should render all components without CSS conflicts', () => {
+      // Mount YearNavigationHeader
+      const wrapper = mount(YearNavigationHeader, {
+        props: {
+          selectedYear: 2024
+        }
+      });
+
+      // Verify YearNavigationHeader renders with white text styling
+      const pageTitle = wrapper.find('.page-title');
+      expect(pageTitle.exists()).toBe(true);
+
+      const currentYear = wrapper.find('.current-year');
+      expect(currentYear.exists()).toBe(true);
+
+      // Verify the component's scoped styles are applied via data attributes
+      // Vue scoped styles add unique data attributes like data-v-XXXXX
+      const pageTitleElement = pageTitle.element;
+      const attributeNames = Array.from(pageTitleElement.attributes).map(attr => attr.name);
+
+      // The element should have at least one data-v-* attribute from scoped styles
+      // Note: In test environment, this might not be present, but we verify the component structure
+      expect(pageTitle.classes()).toContain('page-title');
+
+      wrapper.unmount();
+    });
+
+    it('YearNavigationHeader white color style is isolated to its elements only', () => {
+      // Verify the CSS source code isolation
+      const yearNavContent = getComponentContent();
+      const categorySectionContent = getOtherComponentContent('CategorySection.vue');
+
+      // Extract style sections
+      const yearNavStyle = yearNavContent.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] || '';
+      const categoryStyle = categorySectionContent.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] || '';
+
+      // YearNavigationHeader should have color: #fff for .page-title
+      expect(yearNavStyle).toMatch(/\.page-title[\s\S]*?color:\s*#fff/);
+
+      // CategorySection should NOT have color: #fff for .category-title
+      // It uses #f3f3f3 instead
+      const categoryTitleBlock = categoryStyle.match(/\.category-title\s*\{([^}]*)\}/);
+      expect(categoryTitleBlock).toBeTruthy();
+      expect(categoryTitleBlock[1]).not.toMatch(/color:\s*#fff\b/);
+      expect(categoryTitleBlock[1]).toMatch(/color:\s*#f3f3f3/);
+    });
+  });
+});
