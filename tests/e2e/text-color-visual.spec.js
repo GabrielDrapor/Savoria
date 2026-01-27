@@ -161,3 +161,215 @@ test.describe('NFR-3: Responsive behavior at 768px breakpoint', () => {
     expect(suffixColorDesktop).toBe('rgb(255, 255, 255)');
   });
 });
+
+/**
+ * Scenario 7: Visual regression - No gradient visible
+ * Verifies that no gradient effect is visible on any text element in the
+ * YearNavigationHeader component. The text should appear as uniform solid white.
+ *
+ * Test approach:
+ * - Check computed styles to verify no gradient-related properties are applied
+ * - Verify -webkit-text-fill-color is not 'transparent' (gradient technique)
+ * - Verify background-clip is not 'text' (gradient technique)
+ * - Verify color is solid white throughout all text elements
+ */
+test.describe('Scenario 7: Visual regression - No gradient visible', () => {
+  test('TC1: The word "In" (title-prefix) displays in uniform white color with no gradient', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+
+    const titlePrefix = page.locator('.title-prefix');
+    await expect(titlePrefix).toBeVisible();
+
+    // Verify the text content is "In"
+    await expect(titlePrefix).toHaveText('In');
+
+    // Check computed styles to verify no gradient technique is applied
+    const styles = await titlePrefix.evaluate((el) => {
+      const computed = window.getComputedStyle(el);
+      return {
+        color: computed.color,
+        backgroundColor: computed.backgroundColor,
+        backgroundImage: computed.backgroundImage,
+        backgroundClip: computed.backgroundClip,
+        webkitBackgroundClip: computed.webkitBackgroundClip,
+        webkitTextFillColor: computed.webkitTextFillColor
+      };
+    });
+
+    // Verify solid white color (rgb(255, 255, 255))
+    expect(styles.color).toBe('rgb(255, 255, 255)');
+
+    // Verify no gradient background image
+    expect(styles.backgroundImage).toBe('none');
+
+    // Verify background-clip is NOT 'text' (gradient technique)
+    expect(styles.backgroundClip).not.toBe('text');
+    expect(styles.webkitBackgroundClip).not.toBe('text');
+
+    // Verify -webkit-text-fill-color is NOT 'transparent' (gradient technique)
+    // It should be either 'rgb(255, 255, 255)' or 'initial' or match the color
+    expect(styles.webkitTextFillColor).not.toBe('transparent');
+  });
+
+  test('TC2: The year number (current-year) displays in uniform white color with no gradient', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+
+    const currentYear = page.locator('.current-year');
+    await expect(currentYear).toBeVisible();
+
+    // Verify the text content is a year (4 digit number)
+    const yearText = await currentYear.textContent();
+    expect(yearText?.trim()).toMatch(/^\d{4}$/);
+
+    // Check computed styles to verify no gradient technique is applied
+    const styles = await currentYear.evaluate((el) => {
+      const computed = window.getComputedStyle(el);
+      return {
+        color: computed.color,
+        backgroundColor: computed.backgroundColor,
+        backgroundImage: computed.backgroundImage,
+        backgroundClip: computed.backgroundClip,
+        webkitBackgroundClip: computed.webkitBackgroundClip,
+        webkitTextFillColor: computed.webkitTextFillColor
+      };
+    });
+
+    // Verify solid white color (rgb(255, 255, 255))
+    expect(styles.color).toBe('rgb(255, 255, 255)');
+
+    // Verify no gradient background image
+    expect(styles.backgroundImage).toBe('none');
+
+    // Verify background-clip is NOT 'text' (gradient technique)
+    expect(styles.backgroundClip).not.toBe('text');
+    expect(styles.webkitBackgroundClip).not.toBe('text');
+
+    // Verify -webkit-text-fill-color is NOT 'transparent' (gradient technique)
+    expect(styles.webkitTextFillColor).not.toBe('transparent');
+  });
+
+  test('TC3: The comma suffix (title-suffix) displays in uniform white color with no gradient', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+
+    const titleSuffix = page.locator('.title-suffix');
+    await expect(titleSuffix).toBeVisible();
+
+    // Verify the text content is a comma
+    await expect(titleSuffix).toHaveText(',');
+
+    // Check computed styles to verify no gradient technique is applied
+    const styles = await titleSuffix.evaluate((el) => {
+      const computed = window.getComputedStyle(el);
+      return {
+        color: computed.color,
+        backgroundColor: computed.backgroundColor,
+        backgroundImage: computed.backgroundImage,
+        backgroundClip: computed.backgroundClip,
+        webkitBackgroundClip: computed.webkitBackgroundClip,
+        webkitTextFillColor: computed.webkitTextFillColor
+      };
+    });
+
+    // Verify solid white color (rgb(255, 255, 255))
+    expect(styles.color).toBe('rgb(255, 255, 255)');
+
+    // Verify no gradient background image
+    expect(styles.backgroundImage).toBe('none');
+
+    // Verify background-clip is NOT 'text' (gradient technique)
+    expect(styles.backgroundClip).not.toBe('text');
+    expect(styles.webkitBackgroundClip).not.toBe('text');
+
+    // Verify -webkit-text-fill-color is NOT 'transparent' (gradient technique)
+    expect(styles.webkitTextFillColor).not.toBe('transparent');
+  });
+
+  test('All header text elements have consistent white color (no gradient variation)', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+
+    // Wait for all elements to be visible
+    const titlePrefix = page.locator('.title-prefix');
+    const currentYear = page.locator('.current-year');
+    const titleSuffix = page.locator('.title-suffix');
+    const pageTitle = page.locator('.page-title');
+
+    await expect(titlePrefix).toBeVisible();
+    await expect(currentYear).toBeVisible();
+    await expect(titleSuffix).toBeVisible();
+    await expect(pageTitle).toBeVisible();
+
+    // Get all colors and verify they are the same white
+    const colors = await page.evaluate(() => {
+      const getColor = (selector) => {
+        const el = document.querySelector(selector);
+        return el ? window.getComputedStyle(el).color : null;
+      };
+      return {
+        pageTitle: getColor('.page-title'),
+        titlePrefix: getColor('.title-prefix'),
+        currentYear: getColor('.current-year'),
+        titleSuffix: getColor('.title-suffix')
+      };
+    });
+
+    // All elements should have the same white color
+    const white = 'rgb(255, 255, 255)';
+    expect(colors.pageTitle).toBe(white);
+    expect(colors.titlePrefix).toBe(white);
+    expect(colors.currentYear).toBe(white);
+    expect(colors.titleSuffix).toBe(white);
+
+    // Additional check: verify no gradient-related properties on page-title
+    const pageTitleStyles = await pageTitle.evaluate((el) => {
+      const computed = window.getComputedStyle(el);
+      return {
+        backgroundImage: computed.backgroundImage,
+        backgroundClip: computed.backgroundClip,
+        webkitTextFillColor: computed.webkitTextFillColor
+      };
+    });
+
+    expect(pageTitleStyles.backgroundImage).toBe('none');
+    expect(pageTitleStyles.backgroundClip).not.toBe('text');
+    expect(pageTitleStyles.webkitTextFillColor).not.toBe('transparent');
+  });
+
+  test('Page title CSS does not contain gradient-related properties after change', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.goto('/');
+
+    // Verify page loads and header is present
+    const header = page.locator('[data-testid="year-navigation-header"]');
+    await expect(header).toBeVisible();
+
+    // Check all relevant elements for absence of gradient styling
+    const elementsToCheck = ['.page-title', '.title-prefix', '.title-suffix', '.current-year'];
+
+    for (const selector of elementsToCheck) {
+      const element = page.locator(selector);
+      await expect(element).toBeVisible();
+
+      const hasGradient = await element.evaluate((el) => {
+        const computed = window.getComputedStyle(el);
+        const backgroundImage = computed.backgroundImage;
+        const backgroundClip = computed.backgroundClip;
+        const webkitBackgroundClip = computed.webkitBackgroundClip;
+        const webkitTextFillColor = computed.webkitTextFillColor;
+
+        // Check for gradient indicators
+        const hasLinearGradient = backgroundImage.includes('linear-gradient');
+        const hasTextClip = backgroundClip === 'text' || webkitBackgroundClip === 'text';
+        const hasTransparentFill = webkitTextFillColor === 'transparent';
+
+        return hasLinearGradient || hasTextClip || hasTransparentFill;
+      });
+
+      // No element should have gradient styling
+      expect(hasGradient).toBe(false);
+    }
+  });
+});
