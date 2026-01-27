@@ -144,16 +144,12 @@ export default {
 }
 
 .page-title {
-  color: #f3f3f3;
+  color: #fff;
   font-size: 5.5em;
   font-weight: 300;
   margin: 2rem 0;
   font-family: 'Space Grotesk', 'Helvetica Neue', 'SimHei', 'STHeiti';
   letter-spacing: -0.03em;
-  background: linear-gradient(to right, #fff, #c4c4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
