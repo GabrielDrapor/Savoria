@@ -13,9 +13,428 @@
  * - Navigate to the app and locate YearNavigationHeader
  * - Use getComputedStyle via page.evaluate to verify colors
  * - Test at different viewport widths (mobile, desktop)
+ * - Optionally capture screenshots for visual comparison
  */
 
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// Mock data for API responses
+const mockBookData = {
+  data: Array.from({ length: 6 }, (_, i) => ({
+    item: {
+      cover_image_url: `https://neodb.social/m/item/book${i + 1}.jpg`,
+      display_title: `Test Book ${i + 1}`,
+      id: `book-${i + 1}`
+    },
+    created_time: `2024-0${i + 1}-15T10:30:00Z`
+  }))
+};
+
+const mockScreenData = {
+  data: Array.from({ length: 4 }, (_, i) => ({
+    item: {
+      cover_image_url: `https://neodb.social/m/item/movie${i + 1}.jpg`,
+      display_title: `Test Movie ${i + 1}`,
+      id: `movie-${i + 1}`
+    },
+    created_time: `2024-0${i + 1}-20T14:00:00Z`
+  }))
+};
+
+const mockMusicData = {
+  data: Array.from({ length: 3 }, (_, i) => ({
+    item: {
+      cover_image_url: `https://neodb.social/m/item/music${i + 1}.jpg`,
+      display_title: `Test Album ${i + 1}`,
+      id: `music-${i + 1}`
+    },
+    created_time: `2024-0${i + 1}-10T08:00:00Z`
+  }))
+};
+
+const mockGameData = {
+  data: Array.from({ length: 2 }, (_, i) => ({
+    item: {
+      cover_image_url: `https://neodb.social/m/item/game${i + 1}.jpg`,
+      display_title: `Test Game ${i + 1}`,
+      id: `game-${i + 1}`
+    },
+    created_time: `2024-0${i + 1}-25T16:00:00Z`
+  }))
+};
+
+/**
+ * Helper function to normalize color to RGB format
+ * Converts various color formats (hex, rgb, rgba) to rgb(r, g, b)
+ */
+function normalizeColorToRGB(color) {
+  // Handle rgb/rgba formats
+  if (color.startsWith('rgb')) {
+    const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+      return `rgb(${match[1]}, ${match[2]}, ${match[3]})`;
+    }
+  }
+  // Handle hex formats
+  if (color.startsWith('#')) {
+    let hex = color.slice(1);
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  // Handle named colors
+  if (color === 'white') {
+    return 'rgb(255, 255, 255)';
+  }
+  return color;
+}
+
+/**
+ * Check if a color is white (rgb(255, 255, 255))
+ */
+function isWhiteColor(color) {
+  const normalized = normalizeColorToRGB(color);
+  return normalized === 'rgb(255, 255, 255)';
+}
+
+/**
+ * NFR-2: Cross-browser color compatibility
+ *
+ * Verify that the solid white color displays correctly across different browsers.
+ * The test cases verify:
+ * 1. No vendor-prefixed gradient properties remain (-webkit-background-clip: text)
+ * 2. No -webkit-text-fill-color: transparent
+ * 3. Text renders as white (#ffffff) in Chromium
+ * 4. Text renders as white (#ffffff) in Firefox
+ */
+test.describe('NFR-2: Cross-browser color compatibility', () => {
+  test.beforeEach(async ({ page }) => {
+    // Mock API responses
+    await page.route('**/api/complete/book/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockBookData)
+      });
+    });
+
+    await page.route('**/api/complete/screen/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockScreenData)
+      });
+    });
+
+    await page.route('**/api/complete/music/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockMusicData)
+      });
+    });
+
+    await page.route('**/api/complete/game/**', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockGameData)
+      });
+    });
+
+    // Navigate to the gallery page
+    await page.goto('/');
+    // Wait for the page to be ready (domcontentloaded is more reliable than networkidle)
+    await page.waitForLoadState('domcontentloaded');
+  });
+
+  test.describe('Test Case 1: No -webkit-background-clip: text in component CSS', () => {
+    test('should not have -webkit-background-clip: text applied to text elements', async ({ page, browserName }) => {
+      // Wait for the header to be visible
+      const header = page.locator('[data-testid="year-navigation-header"]');
+      await expect(header).toBeVisible({ timeout: 10000 });
+
+      // Check that -webkit-background-clip is not 'text' for any text elements
+      const pageTitle = page.locator('.page-title');
+      await expect(pageTitle).toBeVisible();
+
+      const backgroundClip = await pageTitle.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        // Check both prefixed and unprefixed versions
+        return {
+          webkitBackgroundClip: computed.webkitBackgroundClip || computed.getPropertyValue('-webkit-background-clip'),
+          backgroundClip: computed.backgroundClip
+        };
+      });
+
+      // Should not be 'text' - standard values are 'border-box', 'padding-box', or 'content-box'
+      expect(backgroundClip.webkitBackgroundClip).not.toBe('text');
+      expect(backgroundClip.backgroundClip).not.toBe('text');
+    });
+
+    test('should not have -webkit-background-clip: text in .current-year', async ({ page, browserName }) => {
+      const currentYear = page.locator('[data-testid="current-year-display"]');
+      await expect(currentYear).toBeVisible({ timeout: 10000 });
+
+      const backgroundClip = await currentYear.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return {
+          webkitBackgroundClip: computed.webkitBackgroundClip || computed.getPropertyValue('-webkit-background-clip'),
+          backgroundClip: computed.backgroundClip
+        };
+      });
+
+      expect(backgroundClip.webkitBackgroundClip).not.toBe('text');
+      expect(backgroundClip.backgroundClip).not.toBe('text');
+    });
+  });
+
+  test.describe('Test Case 2: No -webkit-text-fill-color: transparent', () => {
+    test('should not have -webkit-text-fill-color: transparent on .page-title', async ({ page, browserName }) => {
+      const pageTitle = page.locator('.page-title');
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+
+      const textFillColor = await pageTitle.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return computed.webkitTextFillColor || computed.getPropertyValue('-webkit-text-fill-color');
+      });
+
+      // Should not be 'transparent'
+      expect(textFillColor).not.toBe('transparent');
+    });
+
+    test('should not have -webkit-text-fill-color: transparent on .current-year', async ({ page, browserName }) => {
+      const currentYear = page.locator('[data-testid="current-year-display"]');
+      await expect(currentYear).toBeVisible({ timeout: 10000 });
+
+      const textFillColor = await currentYear.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return computed.webkitTextFillColor || computed.getPropertyValue('-webkit-text-fill-color');
+      });
+
+      expect(textFillColor).not.toBe('transparent');
+    });
+
+    test('should not have -webkit-text-fill-color: transparent on .title-prefix', async ({ page, browserName }) => {
+      const titlePrefix = page.locator('.title-prefix');
+      await expect(titlePrefix).toBeVisible({ timeout: 10000 });
+
+      const textFillColor = await titlePrefix.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return computed.webkitTextFillColor || computed.getPropertyValue('-webkit-text-fill-color');
+      });
+
+      expect(textFillColor).not.toBe('transparent');
+    });
+  });
+
+  test.describe('Test Case 3: Chromium browser text color verification', () => {
+    test('should render .page-title in white (#ffffff) in Chromium', async ({ page, browserName }) => {
+      // This test runs in the chromium project
+      test.skip(browserName !== 'chromium', 'This test is for Chromium only');
+
+      const pageTitle = page.locator('.page-title');
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+
+      const color = await pageTitle.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      // Color should be white: rgb(255, 255, 255)
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .current-year in white (#ffffff) in Chromium', async ({ page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'This test is for Chromium only');
+
+      const currentYear = page.locator('[data-testid="current-year-display"]');
+      await expect(currentYear).toBeVisible({ timeout: 10000 });
+
+      const color = await currentYear.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .title-prefix in white (#ffffff) in Chromium', async ({ page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'This test is for Chromium only');
+
+      const titlePrefix = page.locator('.title-prefix');
+      await expect(titlePrefix).toBeVisible({ timeout: 10000 });
+
+      const color = await titlePrefix.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .title-suffix in white (#ffffff) in Chromium', async ({ page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'This test is for Chromium only');
+
+      const titleSuffix = page.locator('.title-suffix');
+      await expect(titleSuffix).toBeVisible({ timeout: 10000 });
+
+      const color = await titleSuffix.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+  });
+
+  test.describe('Test Case 4: Firefox browser text color verification', () => {
+    test('should render .page-title in white (#ffffff) in Firefox', async ({ page, browserName }) => {
+      test.skip(browserName !== 'firefox', 'This test is for Firefox only');
+
+      const pageTitle = page.locator('.page-title');
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+
+      const color = await pageTitle.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .current-year in white (#ffffff) in Firefox', async ({ page, browserName }) => {
+      test.skip(browserName !== 'firefox', 'This test is for Firefox only');
+
+      const currentYear = page.locator('[data-testid="current-year-display"]');
+      await expect(currentYear).toBeVisible({ timeout: 10000 });
+
+      const color = await currentYear.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .title-prefix in white (#ffffff) in Firefox', async ({ page, browserName }) => {
+      test.skip(browserName !== 'firefox', 'This test is for Firefox only');
+
+      const titlePrefix = page.locator('.title-prefix');
+      await expect(titlePrefix).toBeVisible({ timeout: 10000 });
+
+      const color = await titlePrefix.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+
+    test('should render .title-suffix in white (#ffffff) in Firefox', async ({ page, browserName }) => {
+      test.skip(browserName !== 'firefox', 'This test is for Firefox only');
+
+      const titleSuffix = page.locator('.title-suffix');
+      await expect(titleSuffix).toBeVisible({ timeout: 10000 });
+
+      const color = await titleSuffix.evaluate(el => {
+        return window.getComputedStyle(el).color;
+      });
+
+      expect(isWhiteColor(color)).toBe(true);
+    });
+  });
+
+  test.describe('Cross-browser consistency verification', () => {
+    test('all header text elements should display in white color', async ({ page, browserName }) => {
+      // This test runs on all configured browsers to ensure consistency
+      const header = page.locator('[data-testid="year-navigation-header"]');
+      await expect(header).toBeVisible({ timeout: 10000 });
+
+      // Verify all text elements have white color
+      const elements = [
+        { selector: '.page-title', name: 'page-title' },
+        { selector: '.title-prefix', name: 'title-prefix' },
+        { selector: '.title-suffix', name: 'title-suffix' },
+        { selector: '[data-testid="current-year-display"]', name: 'current-year' }
+      ];
+
+      for (const { selector, name } of elements) {
+        const element = page.locator(selector);
+        await expect(element).toBeVisible();
+
+        const color = await element.evaluate(el => {
+          return window.getComputedStyle(el).color;
+        });
+
+        expect(isWhiteColor(color), `${name} should be white in ${browserName}`).toBe(true);
+      }
+    });
+
+    test('standard color property should be used (not vendor-prefixed)', async ({ page, browserName }) => {
+      const pageTitle = page.locator('.page-title');
+      await expect(pageTitle).toBeVisible({ timeout: 10000 });
+
+      // Verify that standard color property is being used
+      const styles = await pageTitle.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return {
+          color: computed.color,
+          webkitTextFillColor: computed.webkitTextFillColor || computed.getPropertyValue('-webkit-text-fill-color'),
+          backgroundClip: computed.backgroundClip
+        };
+      });
+
+      // Color should be set to white
+      expect(isWhiteColor(styles.color)).toBe(true);
+
+      // -webkit-text-fill-color should NOT be 'transparent'
+      // (it may be 'currentcolor' or the same as the text color, which is fine)
+      expect(styles.webkitTextFillColor).not.toBe('transparent');
+
+      // background-clip should not be 'text'
+      expect(styles.backgroundClip).not.toBe('text');
+    });
+  });
+});
+
+/**
+ * Unit-style CSS parsing tests (run via Playwright for additional verification)
+ * These complement the Vitest unit tests by verifying the component CSS
+ * is parsed correctly in a real browser environment.
+ */
+test.describe('Component CSS verification in browser', () => {
+  test('should verify no gradient-related CSS properties in component', async ({ page }) => {
+    // Read the component source file
+    const componentPath = resolve(process.cwd(), 'src/components/YearNavigationHeader.vue');
+    const componentSource = readFileSync(componentPath, 'utf-8');
+
+    // Extract style section
+    const styleMatch = componentSource.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+    expect(styleMatch).toBeTruthy();
+    const styleContent = styleMatch[1];
+
+    // Verify no gradient-related properties for text elements
+    // These properties should NOT be present for text styling
+    const gradientTextPatterns = [
+      /\.page-title[^}]*-webkit-background-clip:\s*text/,
+      /\.page-title[^}]*-webkit-text-fill-color:\s*transparent/,
+      /\.current-year[^}]*-webkit-background-clip:\s*text/,
+      /\.current-year[^}]*-webkit-text-fill-color:\s*transparent/,
+      /\.title-prefix[^}]*-webkit-background-clip:\s*text/,
+      /\.title-prefix[^}]*-webkit-text-fill-color:\s*transparent/,
+      /\.title-suffix[^}]*-webkit-background-clip:\s*text/,
+      /\.title-suffix[^}]*-webkit-text-fill-color:\s*transparent/
+    ];
+
+    for (const pattern of gradientTextPatterns) {
+      expect(styleContent).not.toMatch(pattern);
+    }
+
+    // Verify color: #fff is used
+    expect(styleContent).toMatch(/\.page-title[^}]*color:\s*#fff/);
+    expect(styleContent).toMatch(/\.current-year[^}]*color:\s*#fff/);
+  });
+});
 
 /**
  * NFR-3: Responsive behavior at 768px breakpoint tests
