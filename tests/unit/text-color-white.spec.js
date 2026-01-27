@@ -386,3 +386,102 @@ describe('Text Color White - REQ-3: .current-year gradient removal', () => {
     });
   });
 });
+
+/**
+ * NFR-1: Maintain existing font styles
+ *
+ * Verify that the color change does not affect font-size, font-weight,
+ * font-family, letter-spacing, or margins of any text elements.
+ * The visual appearance should remain identical except for the color change.
+ */
+describe('NFR-1: Maintain existing font styles', () => {
+  describe('Step 1: Verify .page-title font properties', () => {
+    it('should preserve font-size: 5.5em in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/font-size:\s*5\.5em/);
+    });
+
+    it('should preserve font-weight: 300 in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/font-weight:\s*300/);
+    });
+
+    it('should preserve letter-spacing: -0.03em in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/letter-spacing:\s*-0\.03em/);
+    });
+
+    it('should preserve margin: 2rem 0 in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/margin:\s*2rem\s+0/);
+    });
+
+    it('should preserve font-family in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/font-family:\s*'Space Grotesk'/);
+    });
+  });
+
+  describe('Step 2: Verify .current-year font properties', () => {
+    it('should preserve font-size: 1em in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/font-size:\s*1em/);
+    });
+
+    it('should preserve font-weight: 500 in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/font-weight:\s*500/);
+    });
+  });
+
+  describe('Step 3: Verify .page-title layout properties', () => {
+    it('should preserve display: flex in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/display:\s*flex/);
+    });
+
+    it('should preserve align-items: center in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/align-items:\s*center/);
+    });
+
+    it('should preserve justify-content: center in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/justify-content:\s*center/);
+    });
+
+    it('should preserve flex-wrap: wrap in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/flex-wrap:\s*wrap/);
+    });
+
+    it('should preserve gap: 0.2em in .page-title', () => {
+      const componentContent = getComponentContent();
+      const pageTitleCss = extractCssBlock(componentContent, '.page-title');
+
+      expect(pageTitleCss).toMatch(/gap:\s*0\.2em/);
+    });
+  });
+});
