@@ -163,10 +163,7 @@ export default {
 
 .title-prefix,
 .title-suffix {
-  background: inherit;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
 }
 
 .year-navigation {
