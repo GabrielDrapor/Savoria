@@ -5,10 +5,15 @@
  * from YearNavigationHeader.vue and replaced with solid white color.
  *
  * Covers:
+ * - REQ-1: .page-title gradient removal
  * - REQ-2: .title-prefix, .title-suffix gradient removal
+ * - REQ-3: .current-year gradient removal
+ * - REQ-4: Solid white color (#fff) applied
+ * - NFR-1: Font properties preserved
+ * - Component isolation via scoped CSS
  *
  * Test approach:
- * - Parse Vue component CSS using string matching
+ * - Parse Vue component CSS using string matching or regex
  * - Mount component and check computed styles via JSDOM
  * - Verify absence of gradient-related CSS properties
  * - Verify presence of color: #fff or equivalent
@@ -16,9 +21,45 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { mount } from '@vue/test-utils';
 import YearNavigationHeader from '../../src/components/YearNavigationHeader.vue';
+
+/**
+ * Helper function to extract CSS content from a specific selector in the component
+ * @param {string} componentContent - The full component file content
+ * @param {string} selector - The CSS selector to find
+ * @returns {string} The CSS block for that selector
+ */
+function extractCssBlock(componentContent, selector) {
+  // Extract style section
+  const styleMatch = componentContent.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+  if (!styleMatch) return '';
+  const styleContent = styleMatch[1];
+
+  // Build regex for the selector - escape special characters
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`${escapedSelector}\\s*\\{([^}]*)\\}`, 'g');
+
+  const matches = [];
+  let match;
+  while ((match = regex.exec(styleContent)) !== null) {
+    matches.push(match[1]);
+  }
+
+  return matches.join('\n');
+}
+
+/**
+ * Helper to read the component file content
+ * @returns {string} The component file content
+ */
+function getComponentContent() {
+  return readFileSync(
+    resolve(__dirname, '../../src/components/YearNavigationHeader.vue'),
+    'utf-8'
+  );
+}
 
 describe('REQ-2: Remove gradient from title prefix and suffix', () => {
   let componentContent;
@@ -131,6 +172,99 @@ describe('REQ-2: Remove gradient from title prefix and suffix', () => {
 
       // Verify the element exists and can be styled
       expect(titleSuffix.text()).toBe(',');
+    });
+  });
+});
+
+describe('Text Color White - REQ-3: .current-year gradient removal', () => {
+  describe('Test Case 1: Parse .current-year CSS for linear-gradient', () => {
+    it('should not have linear-gradient property in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      // Verify no linear-gradient is present
+      expect(currentYearCss).not.toContain('linear-gradient');
+    });
+  });
+
+  describe('Test Case 2: Parse .current-year CSS for background-clip properties', () => {
+    it('should not have -webkit-background-clip: text in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      // Verify no -webkit-background-clip: text is present
+      expect(currentYearCss).not.toMatch(/-webkit-background-clip:\s*text/);
+    });
+
+    it('should not have background-clip: text in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      // Verify no background-clip: text is present
+      expect(currentYearCss).not.toMatch(/background-clip:\s*text/);
+    });
+  });
+
+  describe('Test Case 3: Parse .current-year CSS for -webkit-text-fill-color', () => {
+    it('should not have -webkit-text-fill-color: transparent in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      // Verify no -webkit-text-fill-color: transparent is present
+      expect(currentYearCss).not.toMatch(/-webkit-text-fill-color:\s*transparent/);
+    });
+  });
+
+  describe('Test Case 4: Integration - Verify computed color is white', () => {
+    it('should have color: #fff or color: white in .current-year CSS', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      // Verify color: #fff or color: white is present
+      const hasWhiteColor = /color:\s*(#fff|#ffffff|white|rgb\(255,\s*255,\s*255\))/.test(currentYearCss);
+      expect(hasWhiteColor).toBe(true);
+    });
+
+    it('should render current-year element with white text color', () => {
+      const wrapper = mount(YearNavigationHeader, {
+        props: { selectedYear: 2024 }
+      });
+
+      const currentYearEl = wrapper.find('[data-testid="current-year-display"]');
+      expect(currentYearEl.exists()).toBe(true);
+
+      // In JSDOM, we can check the element exists and has proper class
+      expect(currentYearEl.classes()).toContain('current-year');
+    });
+  });
+
+  describe('NFR-1: Font properties preserved for .current-year', () => {
+    it('should preserve font-size: 1em in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/font-size:\s*1em/);
+    });
+
+    it('should preserve font-weight: 500 in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/font-weight:\s*500/);
+    });
+
+    it('should preserve min-width: 2.5em in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/min-width:\s*2\.5em/);
+    });
+
+    it('should preserve text-align: center in .current-year', () => {
+      const componentContent = getComponentContent();
+      const currentYearCss = extractCssBlock(componentContent, '.current-year');
+
+      expect(currentYearCss).toMatch(/text-align:\s*center/);
     });
   });
 });

@@ -228,13 +228,9 @@ export default {
 .current-year {
   font-size: 1em;
   font-weight: 500;
-  color: #f3f3f3;
+  color: #fff;
   min-width: 2.5em;
   text-align: center;
-  background: linear-gradient(to right, #fff, #c4c4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 @media (max-width: 768px) {
