@@ -485,3 +485,92 @@ describe('NFR-1: Maintain existing font styles', () => {
     });
   });
 });
+
+/**
+ * NFR-3: Responsive behavior at 768px breakpoint
+ *
+ * Verify that the responsive styles at the 768px media query breakpoint
+ * continue to function correctly after the color change.
+ */
+describe('NFR-3: Responsive behavior at 768px breakpoint', () => {
+  /**
+   * Helper to extract media query content from the component CSS
+   * @param {string} componentContent - The full component file content
+   * @param {string} mediaQuery - The media query to find (e.g., 'max-width: 768px')
+   * @returns {string} The content inside the media query block
+   */
+  function extractMediaQueryContent(componentContent, mediaQuery) {
+    const styleMatch = componentContent.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+    if (!styleMatch) return '';
+    const styleContent = styleMatch[1];
+
+    // Build regex to find the media query block
+    const escapedQuery = mediaQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`@media\\s*\\(\\s*${escapedQuery}\\s*\\)\\s*\\{([\\s\\S]*?)\\n\\}`, 'g');
+
+    let match;
+    let content = '';
+    while ((match = regex.exec(styleContent)) !== null) {
+      content += match[1];
+    }
+
+    return content;
+  }
+
+  describe('Test Case 1: Parse @media (max-width: 768px) CSS for .page-title font-size', () => {
+    it('should have font-size: 3.5em in the 768px media query for .page-title', () => {
+      const componentContent = getComponentContent();
+      const mediaQueryContent = extractMediaQueryContent(componentContent, 'max-width: 768px');
+
+      // Verify the media query block exists
+      expect(mediaQueryContent).toBeTruthy();
+
+      // Find .page-title rules within the media query
+      const pageTitleMatch = mediaQueryContent.match(/\.page-title\s*\{([^}]*)\}/);
+      expect(pageTitleMatch).toBeTruthy();
+
+      const pageTitleRules = pageTitleMatch[1];
+
+      // Verify font-size: 3.5em is present
+      expect(pageTitleRules).toMatch(/font-size:\s*3\.5em/);
+    });
+
+    it('should have margin: 1.5rem 0 in the 768px media query for .page-title', () => {
+      const componentContent = getComponentContent();
+      const mediaQueryContent = extractMediaQueryContent(componentContent, 'max-width: 768px');
+
+      // Find .page-title rules within the media query
+      const pageTitleMatch = mediaQueryContent.match(/\.page-title\s*\{([^}]*)\}/);
+      expect(pageTitleMatch).toBeTruthy();
+
+      const pageTitleRules = pageTitleMatch[1];
+
+      // Verify margin: 1.5rem 0 is present
+      expect(pageTitleRules).toMatch(/margin:\s*1\.5rem\s+0/);
+    });
+  });
+
+  describe('Responsive CSS preserved after color changes', () => {
+    it('should have @media (max-width: 768px) block defined', () => {
+      const componentContent = getComponentContent();
+      const mediaQueryContent = extractMediaQueryContent(componentContent, 'max-width: 768px');
+
+      expect(mediaQueryContent.length).toBeGreaterThan(0);
+    });
+
+    it('should have .nav-arrow responsive styles in the 768px media query', () => {
+      const componentContent = getComponentContent();
+      const mediaQueryContent = extractMediaQueryContent(componentContent, 'max-width: 768px');
+
+      // Find .nav-arrow rules within the media query
+      const navArrowMatch = mediaQueryContent.match(/\.nav-arrow\s*\{([^}]*)\}/);
+      expect(navArrowMatch).toBeTruthy();
+
+      const navArrowRules = navArrowMatch[1];
+
+      // Verify button dimensions are present
+      expect(navArrowRules).toMatch(/width:\s*1\.4em/);
+      expect(navArrowRules).toMatch(/height:\s*1\.4em/);
+    });
+  });
+});
