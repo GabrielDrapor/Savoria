@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap');
 
 body {
-  background: linear-gradient(135deg, #0f1033 0%, #0d0d1f 50%, #090912 100%);
+  background: #0c0c0e;
   margin: 0;
   padding: 20px;
   min-height: 100vh;
@@ -10,20 +10,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: #f3f3f3;
   position: relative;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(45, 46, 120, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(45, 46, 120, 0.08) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 1;
 }
 
 #app {
