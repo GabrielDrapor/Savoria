@@ -9,7 +9,7 @@
             }
         },
         {
-            "src": "backend/**/*.py",
+            "src": "backend/main.py",
             "use": "@vercel/python"
         }
     ],
