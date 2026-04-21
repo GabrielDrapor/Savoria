@@ -9,6 +9,11 @@ export default {
     displayTitle: {
       type: String,
       default: 'Untitled'
+    },
+    size: {
+      type: String,
+      default: 's',
+      validator: (v) => ['s', 'm', 'l'].includes(v)
     }
   },
   data() {
@@ -47,6 +52,7 @@ export default {
   <div
     class="cover-item"
     :class="{ 'touch-active': touchActive }"
+    :data-size="size"
     data-testid="cover-item"
     @touchstart="handleTouchStart"
   >

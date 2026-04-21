@@ -18,10 +18,6 @@ if not NEODB_API_KEY:
 
 AUTHORIZATION = f"Bearer {os.environ.get('NEODB_API_KEY', '')}"
 
-JPG_THUMBNAIL_SUFFIX = ".200x200_q85_autocrop_crop-scale.jpg"
-PNG_THUMBNAIL_SUFFIX = ".200x200_q85_autocrop_crop-scale.png"
-
-
 app = Flask(__name__)
 CORS(app)
 
@@ -130,15 +126,6 @@ def get_shelf_items_from_neodb(category, page, shelf_type):
 
     if "data" not in result:
         raise Exception(result)
-
-    for item in result["data"]:
-        cover_image_url = item["item"]["cover_image_url"]
-        if cover_image_url:
-            if cover_image_url.endswith('.jpg'):
-                cover_image_url += JPG_THUMBNAIL_SUFFIX
-            elif cover_image_url.endswith('.png'):
-                cover_image_url += PNG_THUMBNAIL_SUFFIX
-            item["item"]["cover_image_url"] = cover_image_url
 
     return result
 

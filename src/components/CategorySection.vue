@@ -34,7 +34,9 @@ export default {
   },
   data() {
     return {
-      activeItemIndex: null
+      activeItemIndex: null,
+      imagesReady: false,
+      preloadToken: 0
     };
   },
   computed: {
@@ -45,13 +47,59 @@ export default {
       return !this.isLoading && this.isError;
     },
     showEmptyState() {
-      return !this.isLoading && !this.isError && !this.hasItems;
+      return !this.isLoading && !this.isError && !this.hasItems && this.imagesReady;
     },
     showLoadingState() {
-      return this.isLoading && !this.hasItems;
+      return (this.isLoading && !this.hasItems) || (this.hasItems && !this.imagesReady);
+    }
+  },
+  watch: {
+    items: {
+      handler: 'preloadImages',
+      immediate: true
     }
   },
   methods: {
+    async preloadImages() {
+      const token = ++this.preloadToken;
+      if (!this.items || !this.items.length) {
+        this.imagesReady = true;
+        return;
+      }
+      this.imagesReady = false;
+
+      const urls = this.items
+        .map((i) => i && i.item && i.item.cover_image_url)
+        .filter(Boolean);
+
+      if (!urls.length) {
+        this.imagesReady = true;
+        return;
+      }
+
+      const loadAll = Promise.all(
+        urls.map(
+          (url) =>
+            new Promise((resolve) => {
+              const img = new Image();
+              img.onload = resolve;
+              img.onerror = resolve;
+              img.src = url;
+            })
+        )
+      );
+      const timeout = new Promise((resolve) => setTimeout(resolve, 8000));
+
+      await Promise.race([loadAll, timeout]);
+      if (token === this.preloadToken) {
+        this.imagesReady = true;
+      }
+    },
+    getSizeForGrade(grade) {
+      if (grade >= 9) return 'l';
+      if (grade >= 7) return 'm';
+      return 's';
+    },
     handleTouchActivate(index, isActive) {
       if (isActive) {
         // Deactivate previously active item
@@ -112,6 +160,7 @@ export default {
         :ref="`coverItem-${index}`"
         :cover-image-url="item.item.cover_image_url"
         :display-title="item.item.display_title"
+        :size="getSizeForGrade(item.rating_grade)"
         class="grid-item"
         @touch-activate="(isActive) => handleTouchActivate(index, isActive)"
       />
@@ -121,6 +170,7 @@ export default {
 
 <style scoped>
 .category-section {
+  container-type: inline-size;
   position: relative;
   padding: 2rem 0;
 }
@@ -140,14 +190,36 @@ export default {
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(16, 1fr);
+  /* row unit compensates for row-gap so spans produce 3:4 poster aspect ratio */
+  grid-auto-rows: calc((100cqw - 180px) / 48 - 8px);
+  grid-auto-flow: dense;
+  column-gap: 12px;
+  row-gap: 12px;
   width: 100%;
   max-width: 100%;
 }
 
 .grid-item {
-  /* CoverItem component handles internal styling */
+  grid-column: span 2;
+  grid-row: span 8;
+}
+
+.grid-item[data-size="m"] {
+  grid-column: span 3;
+  grid-row: span 12;
+}
+
+.grid-item[data-size="l"] {
+  grid-column: span 4;
+  grid-row: span 16;
+}
+
+.grid-container :deep(.cover-item),
+.grid-container :deep(.cover-container) {
+  aspect-ratio: unset;
+  width: 100%;
+  height: 100%;
 }
 
 /* Empty state */
@@ -219,11 +291,17 @@ export default {
   transform: scale(0.98);
 }
 
-/* Loading state */
-.loading-grid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 20px;
+/* Loading state (flat skeleton, does not participate in bento layout) */
+.grid-container.loading-grid {
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-rows: auto;
+  grid-auto-flow: row;
+  gap: 16px;
+}
+
+.loading-item {
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .loading-item {
@@ -258,24 +336,15 @@ export default {
   }
 }
 
-/* Responsive breakpoints */
-/* Desktop: 10 columns on viewport > 1024px (NFR-2, US-6, PRD Interface Requirements) */
-@media only screen and (min-width: 1025px) {
-  .grid-container {
-    grid-template-columns: repeat(10, 1fr);
-    gap: 20px;
-  }
-}
-
-/* Tablet: 5 columns on viewport 768px-1024px (NFR-2, US-6, PRD Interface Requirements) */
+/* Tablet: 8 columns, re-scale row unit */
 @media only screen and (min-width: 769px) and (max-width: 1024px) {
   .grid-container {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(8, 1fr);
+    grid-auto-rows: calc((100cqw - 84px) / 24 - 8px);
   }
 }
 
-/* Mobile: 3 columns on viewport < 768px (NFR-2, US-6, PRD Interface Requirements) */
+/* Mobile: flatten to uniform 3-column grid with natural aspect-ratio (bento too cramped) */
 @media only screen and (max-width: 768px) {
   .category-title {
     font-size: 2em;
@@ -284,7 +353,23 @@ export default {
 
   .grid-container {
     grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: auto;
+    grid-auto-flow: row;
     gap: 12px;
+  }
+
+  .grid-item,
+  .grid-item[data-size="m"],
+  .grid-item[data-size="l"] {
+    grid-column: span 1;
+    grid-row: auto;
+  }
+
+  .grid-container :deep(.cover-item),
+  .grid-container :deep(.cover-container) {
+    aspect-ratio: 3 / 4;
+    width: 100%;
+    height: auto;
   }
 }
 
